@@ -1,5 +1,7 @@
 # Project Milestones
+
 ## ML-Assisted Predictive Monitoring in Byzantine Fault-Tolerant Consensus Protocols
+
 **Student:** Yulun Miao | **ID:** L39601331  
 **Deadline:** Friday 24 July 2026, 18:00  
 **Today:** 16 June 2026 | **Days Remaining:** 38
@@ -23,7 +25,7 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 
 **Goal:** Finalise all design decisions before writing any code.
 
-- [ ] Confirm research question: *Consensus Degradation Prediction* (not just binary failure)
+- [ ] Confirm research question: _Consensus Degradation Prediction_ (not just binary failure)
 - [ ] Finalise 4 Byzantine fault types: Silent / Replay / Equivocation / Delay
 - [ ] Finalise label schema with quantified thresholds (see below)
 - [ ] Finalise 11 features across 3 groups (see below)
@@ -147,20 +149,20 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 
 ## Key Parameters (Reference)
 
-| Parameter | Value |
-|-----------|-------|
-| Nodes | 7 (5 honest + 2 Byzantine) |
-| Fault types | 4 (Silent, Replay, Equivocation, Delay) |
-| Rounds per fault | 200 |
-| Normal rounds | ~400 |
-| Total records | ~3000–5000 |
-| Train / Val / Test | 70% / 10% / 20% |
-| Random seed | 42 |
-| ML models | Decision Tree, Random Forest, XGBoost |
-| Baseline | Threshold-based, Rule-based |
-| Key novel metric | Prediction Lead Time |
-| Explainability | SHAP (RF + XGBoost) |
-| Scalability test | 7 / 10 / 13 nodes |
+| Parameter          | Value                                   |
+| ------------------ | --------------------------------------- |
+| Nodes              | 7 (5 honest + 2 Byzantine)              |
+| Fault types        | 4 (Silent, Replay, Equivocation, Delay) |
+| Rounds per fault   | 200                                     |
+| Normal rounds      | ~400                                    |
+| Total records      | ~3000–5000                              |
+| Train / Val / Test | 70% / 10% / 20%                         |
+| Random seed        | 42                                      |
+| ML models          | Decision Tree, Random Forest, XGBoost   |
+| Baseline           | Threshold-based, Rule-based             |
+| Key novel metric   | Prediction Lead Time                    |
+| Explainability     | SHAP (RF + XGBoost)                     |
+| Scalability test   | 7 / 10 / 13 nodes                       |
 
 ---
 
@@ -170,6 +172,7 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 > Unit: Consensus Rounds
 
 **Example:**
+
 ```
 Failure occurs at round 150
 Model flags risk at round 142
@@ -177,6 +180,7 @@ Model flags risk at round 142
 ```
 
 **Target output:**
+
 ```
 Decision Tree : X.X rounds avg
 Random Forest : X.X rounds avg
@@ -190,11 +194,11 @@ A higher Lead Time = more time for intervention before failure.
 
 ## Label Definition (Quantified)
 
-| Label | State | Criteria |
-|-------|-------|----------|
-| 0 | Normal | Consensus latency < 50ms, no view change |
-| 1 | Degraded | 50ms ≤ latency < 150ms, OR view-change triggered |
-| 2 | Failure | Consensus timeout, OR commit not reached |
+| Label | State    | Criteria                                         |
+| ----- | -------- | ------------------------------------------------ |
+| 0     | Normal   | Consensus latency < 50ms, no view change         |
+| 1     | Degraded | 50ms ≤ latency < 150ms, OR view-change triggered |
+| 2     | Failure  | Consensus timeout, OR commit not reached         |
 
 ---
 
@@ -257,5 +261,5 @@ Comparison vs Threshold-based / Rule-based
 - [ ] Add Bi-LSTM model, compare with RF + XGBoost
 - [ ] Set up Hyperledger Fabric testnet for real data collection
 - [ ] Add SHAP temporal explainability
-- [ ] Reframe paper title around *Consensus Performance Degradation Prediction*
+- [ ] Reframe paper title around _Consensus Performance Degradation Prediction_
 - [ ] Target submission: IEEE SRDS or ACM SAC
