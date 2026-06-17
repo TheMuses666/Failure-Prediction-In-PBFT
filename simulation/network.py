@@ -1,11 +1,13 @@
 import time
 from config import NUM_BYZANTINE_NODES, CONSENSUS_TIMEOUT_MS
+from simulation.pbft import PBFT_protocol
 
 class Network():
     def __init__(self, nodes):
         self.nodes = nodes
         self.primary = nodes[0]
         self.round_metrics = []
+        self.pbft = PBFT_protocol()
 
     def run_round(self, round_id):
 
@@ -13,46 +15,19 @@ class Network():
         start_time = time.time()
 
         # 2. pre-prepare 
-        message = {
-            'type': 'pre_prepare',
-            'sender_id': self.primary.node_id,
-            'round_id': round_id,
-            'content': f'request_{round_id}'  
-        }
-
-        self.primary.broadcast(self.nodes, message)
+        self.pbft.pre_prepare(self.primary, self.nodes, round_id)
 
         # 3. Prepare
-
-        for node in self.nodes:
-            if node.node_id != self.primary.node_id:
-                prepare_message = {
-                    'type': 'prepare',
-                    'sender_id': node.node_id,
-                    'round_id': round_id,
-                    'content': f'request_{round_id}'  
-                }
-                node.broadcast(self.nodes, prepare_message)
+        self.pbft.prepare(self.primary, self.nodes,  round_id)
 
         # 4. Commit
+        self.pbft.commit(self.nodes, round_id)
 
-        for node in self.nodes:
-            commit_message = {
-                'type': 'commit',
-                'sender_id': node.node_id,
-                'round_id': round_id,
-                'content': f'request_{round_id}'  
-            }
-            node.broadcast(self.nodes, commit_message)
 
         # 5. Censensus result
 
         quorum = 2* NUM_BYZANTINE_NODES + 1
-        success_count = 0
-        for node in self.nodes:
-            commits = node.commit_log.get(round_id, [])
-            if len(commits) >= quorum:
-                success_count +=1
+        success_count = self.pbft.check_consensus(self.nodes, round_id, quorum)
 
         # 6. time cost
         duration_ms = (time.time() - start_time) * 1000
@@ -63,8 +38,7 @@ class Network():
         # Wether Consensus Success
         success = success_count >= quorum and not timeout
 
-
-    
+        self.reset_nodes()
         return {
             'round_id': round_id,
             'success': success,
