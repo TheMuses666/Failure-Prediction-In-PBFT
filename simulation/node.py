@@ -35,11 +35,13 @@ class Node():
         if msg_type == 'prepare':
             if msg_round not in self.prepare_log:
                 self.prepare_log[msg_round] = []
+            if msg_sender not in self.prepare_log[msg_round]:
                 self.prepare_log[msg_round].append(msg_sender)
 
         if msg_type == 'commit':
             if msg_round not in self.commit_log:
                 self.commit_log[msg_round] = []
+            if msg_sender not in self.commit_log[msg_round]:
                 self.commit_log[msg_round].append(msg_sender)
 
 
