@@ -31,12 +31,12 @@ Phase 11 -> Research-quality experiments
 
 Use these projects as references only. The final simulator should remain a custom SimPy-based PBFT simulator tailored to this research question.
 
-| Reference | Use For | Do Not Use For |
-| --- | --- | --- |
-| SimPy | Discrete-event simulation, simulated time, message delay, timeout events, event scheduling | PBFT logic directly, because SimPy is a generic simulation framework |
-| Talaria | Permissioned blockchain simulation design, pBFT-style simulation framing, methodology comparison | Direct implementation dependency, unless its logging model matches this project |
-| ByzFL | Configurable Byzantine attack experiments, robustness benchmark structure, adversarial scenario design | PBFT consensus implementation, because it focuses on federated learning |
-| ai-bft-consensus | ML + consensus proof-of-concept ideas, node scoring or leader-related feature inspiration | Main simulator architecture, unless its code is verified and aligned with PBFT monitoring |
+| Reference        | Use For                                                                                                | Do Not Use For                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| SimPy            | Discrete-event simulation, simulated time, message delay, timeout events, event scheduling             | PBFT logic directly, because SimPy is a generic simulation framework                      |
+| Talaria          | Permissioned blockchain simulation design, pBFT-style simulation framing, methodology comparison       | Direct implementation dependency, unless its logging model matches this project           |
+| ByzFL            | Configurable Byzantine attack experiments, robustness benchmark structure, adversarial scenario design | PBFT consensus implementation, because it focuses on federated learning                   |
+| ai-bft-consensus | ML + consensus proof-of-concept ideas, node scoring or leader-related feature inspiration              | Main simulator architecture, unless its code is verified and aligned with PBFT monitoring |
 
 ---
 
@@ -48,13 +48,13 @@ Use these projects as references only. The final simulator should remain a custo
 
 ### Keep
 
-- [ ] `config.py`
-- [ ] `requirements.txt`
-- [ ] `collection/label_generator.py` concept
-- [ ] `ml/`
-- [ ] `baseline/`
-- [ ] `experiments/`
-- [ ] `visualization/`
+- [x] `config.py`
+- [x] `requirements.txt`
+- [x] `collection/label_generator.py` concept
+- [x] `ml/`
+- [x] `baseline/`
+- [x] `experiments/`
+- [x] `visualization/`
 
 ### Rewrite or Heavily Refactor
 
