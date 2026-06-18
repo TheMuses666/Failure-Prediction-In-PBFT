@@ -4,7 +4,7 @@
 
 **Student:** Yulun Miao | **ID:** L39601331  
 **Deadline:** Friday 24 July 2026, 18:00  
-**Today:** 16 June 2026 | **Days Remaining:** 38
+**Today:** 18 June 2026 | **Days Remaining:** 36
 
 ---
 
@@ -25,13 +25,13 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 
 **Goal:** Finalise all design decisions before writing any code.
 
-- [ ] Confirm research question: _Consensus Degradation Prediction_ (not just binary failure)
-- [ ] Finalise 4 Byzantine fault types: Silent / Replay / Equivocation / Delay
-- [ ] Finalise label schema with quantified thresholds (see below)
-- [ ] Finalise 11 features across 3 groups (see below)
-- [ ] Set up project folder structure
-- [ ] Set up Python environment (`requirements.txt`)
-- [ ] Write `config.py` with all global parameters
+- [x] Confirm research question: _Consensus Degradation Prediction_ (not just binary failure)
+- [x] Finalise 4 Byzantine fault types: Silent / Replay / Equivocation / Delay
+- [x] Finalise label schema with quantified thresholds (see below)
+- [x] Finalise 11 features across 3 groups (see below)
+- [x] Set up project folder structure
+- [x] Set up Python environment (`requirements.txt`)
+- [x] Write `config.py` with all global parameters
 
 **Deliverable:** Project skeleton + config ready
 
@@ -41,16 +41,187 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 
 **Goal:** Working simulator that generates labelled behavioural data.
 
-- [ ] Implement `node.py` — `Node` base class + `ByzantineNode` subclass
-- [ ] Implement `network.py` — message passing, broadcast, metrics collection
-- [ ] Implement `pbft.py` — 4 phases: Pre-prepare / Prepare / Commit / Reply
-- [ ] Implement `fault_injector.py` — inject 4 fault types at configurable ratios
-- [ ] Run 200 rounds per fault type (800+ rounds total)
+### Step 1 — Node Message Logging
+
+- [x] Implement `simulation/node.py` — `Node` base class + `Byzantine_Node` subclass
+- [x] Store `prepare_log` and `commit_log` by `round_id`
+- [x] Avoid duplicate sender counts for replayed prepare/commit messages
+- [x] Smoke test `node.py`
+
+Test:
+
+```bash
+python3 -c "from simulation.node import Node; n=Node(1); n.receive_message({'type':'prepare','sender_id':2,'round_id':1,'content':'x'}); n.receive_message({'type':'prepare','sender_id':3,'round_id':1,'content':'x'}); print(n.prepare_log)"
+```
+
+Expected:
+
+```text
+{1: [2, 3]}
+```
+
+### Step 2 — Fault Injection
+
+- [x] Implement `simulation/fault_injector.py` — create honest and Byzantine nodes
+- [x] Support four fault types: `silent`, `replay`, `equivocation`, `delay`
+- [x] Smoke test `fault_injector.py`
+
+Test:
+
+```bash
+python3 -c "from simulation.fault_injector import FaultInjector; nodes=FaultInjector().create_nodes('silent'); print(len(nodes)); print(sum(n.is_Byzantine for n in nodes)); print([type(n).__name__ for n in nodes])"
+```
+
+Expected:
+
+```text
+7
+2
+```
+
+### Step 3 — PBFT Round Execution
+
+- [x] Implement `simulation/pbft.py` — Pre-prepare / Prepare / Commit flow
+- [x] Add or document simplified Reply phase decision
+- [x] Implement `simulation/network.py` — one round calls PBFT phases and consensus check
+- [x] Extract round metrics before calling `reset_nodes()`
+- [ ] Smoke test `network.py`
+
+Test:
+
+```bash
+python3 -c "from simulation.fault_injector import FaultInjector; from simulation.network import Network; nodes=FaultInjector().create_nodes('silent'); print(Network(nodes).run_round(1))"
+```
+
+Expected:
+
+```text
+A metrics dictionary containing round_id, success, duration_ms, timeout, success_count, consensus_agreement_time, timeout_frequency, and response_time.
+```
+
+### Step 4 — Label Generation
+
+- [x] Implement `collection/label_generator.py`
+- [x] Convert one metrics dictionary into label `0`, `1`, or `2`
+- [x] Smoke test `label_generator.py`
+
+Initial rule:
+
+```text
+Failure  = timeout OR not success
+Degraded = duration_ms >= 50
+Normal   = otherwise
+```
+
+Test:
+
+```bash
+python3 -c "from collection.label_generator import generate_label; print(generate_label({'timeout': False, 'success': True, 'duration_ms': 20})); print(generate_label({'timeout': False, 'success': True, 'duration_ms': 80})); print(generate_label({'timeout': True, 'success': False, 'duration_ms': 200}))"
+```
+
+Expected:
+
+```text
+0
+1
+2
+```
+
+### Step 5 — Feature Extraction
+
+- [ ] Implement `collection/feature_extractor.py`
+- [ ] Return all 11 feature columns with numeric values
+- [ ] Remove all `None` feature placeholders from generated records
+- [ ] Smoke test `feature_extractor.py`
+
+Test:
+
+```bash
+python3 -c "from collection.feature_extractor import extract_features; print(extract_features({'duration_ms': 20, 'timeout': False, 'success': True, 'success_count': 5}))"
+```
+
+Expected:
+
+```text
+A dictionary containing all 11 feature columns with no None values.
+```
+
+### Step 6 — Integrate Features and Labels into `network.py`
+
+- [ ] Update `simulation/network.py` so `run_round()` returns one complete dataset row
+- [ ] Include `round_id`, status fields, 11 features, and `label`
+- [ ] Smoke test one `delay` round
+
+Test:
+
+```bash
+python3 -c "from simulation.fault_injector import FaultInjector; from simulation.network import Network; nodes=FaultInjector().create_nodes('delay'); row=Network(nodes).run_round(1); print(row); print(row['label'])"
+```
+
+Expected:
+
+```text
+No error, no feature value is None, and label exists.
+```
+
+### Step 7 — Small Runner in `main.py`
+
+- [ ] Implement `main.py` small-run mode
+- [ ] Run 5 normal rounds and 5 rounds per fault type
+- [ ] Print row count and label distribution
+- [ ] Smoke test `main.py`
+
+Test:
+
+```bash
+python3 main.py
+```
+
+Expected:
+
+```text
+total rows: 25
+label distribution: ...
+```
+
+### Step 8 — Save Raw CSV
+
+- [ ] Save generated rows to `data/raw/consensus_data.csv`
+- [ ] Verify CSV shape, columns, and label distribution
+
+Test:
+
+```bash
+python3 main.py
+python3 -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df.head()); print(df['label'].value_counts())"
+```
+
+Expected:
+
+```text
+CSV exists, contains 11 feature columns plus label, and labels are not all one class.
+```
+
+### Step 9 — Full Simulation Run
+
+- [ ] Run 200 rounds per fault type
 - [ ] Include normal operation rounds (~400) for balance
-- [ ] Output raw CSV to `data/raw/`
 - [ ] Verify data distribution and label balance
 
-**Deliverable:** `data/raw/consensus_data.csv` (~3000–5000 records)
+Test:
+
+```bash
+python3 main.py
+python3 -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['fault_type'].value_counts()); print(df['label'].value_counts())"
+```
+
+Expected:
+
+```text
+1200 rows total: 400 normal rows and 200 rows for each fault type.
+```
+
+**Deliverable:** `data/raw/consensus_data.csv` (initial full run: 1200 records; optional extended run can target ~3000–5000 records)
 
 ---
 

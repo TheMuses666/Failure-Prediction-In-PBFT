@@ -38,13 +38,17 @@ class Network():
         # Wether Consensus Success
         success = success_count >= quorum and not timeout
 
+
+        metrics = self.extract_round_metrics(
+            round_id=round_id,
+            duration_ms=duration_ms,
+            timeout=timeout,
+            success=success,
+            success_count=success_count
+        )
+
         self.reset_nodes()
-        return {
-            'round_id': round_id,
-            'success': success,
-            'duration_ms': duration_ms,
-            'timeout': timeout,
-        }
+        return metrics
         
 
     def reset_nodes(self):
@@ -53,3 +57,25 @@ class Network():
             node.prepare_log = {}
             node.commit_log = {}
             node.current_phase = None
+
+    def extract_round_metrics(self, round_id, duration_ms, timeout, success, success_count):
+        return {
+            "round_id": round_id,
+            "success": success,
+            "duration_ms": duration_ms,
+            "timeout": timeout,
+            "success_count": success_count,
+
+            # later feature columns
+            "message_latency": None,
+            "message_drop_rate": None,
+            "propagation_pattern": None,
+            "consensus_agreement_time": duration_ms,
+            "phase_completion_time": None,
+            "timeout_frequency": int(timeout),
+            "leader_change_frequency": 0,
+            "response_time": duration_ms,
+            "voting_consistency": None,
+            "message_consistency": None,
+            "vote_deviation": None,
+        }

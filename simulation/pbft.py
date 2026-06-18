@@ -38,3 +38,15 @@ class PBFT_protocol():
                 success_count +=1
 
         return success_count
+    
+    def reply(self, nodes, round_id):
+        replies = []
+        for node in nodes:
+            if round_id in node.commit_log:
+                replies.append({
+                    "type": "reply",
+                    "sender_id": node.node_id,
+                    "round_id": round_id,
+                    "content": f"reply_{round_id}"
+                })
+        return replies
