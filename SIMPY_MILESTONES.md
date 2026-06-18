@@ -67,9 +67,9 @@ Use these projects as references only. The final simulator should remain a custo
 
 ### Add
 
-- [ ] `simulation/message.py`
-- [ ] `simulation/simpy_network.py`
-- [ ] `simulation/round_result.py`
+- [x] `simulation/message.py`
+- [x] `simulation/simpy_network.py`
+- [x] `simulation/round_result.py`
 
 **Deliverable:** Clear file-level architecture for the SimPy simulator.
 
@@ -99,7 +99,7 @@ simulation/simpy_network.py
 
 - [ ] Use `simpy.Environment`
 - [ ] Use `env.now` as simulated time
-- [ ] Do not use `time.sleep()`
+- [x] Do not use `time.sleep()`
 - [ ] Implement message delivery through scheduled events
 - [ ] Track sent, delivered, dropped, delayed, replayed, and equivocated messages
 
