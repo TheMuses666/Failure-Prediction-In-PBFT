@@ -1,0 +1,48 @@
+# macOS
+.DS_Store
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python packaging and test cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Generated data and experiment outputs
+data/raw/*
+data/processed/*
+results/figures/*
+results/metrics/*
+results/models/*
+
+# Keep output directories in git if placeholder files are added later
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!results/figures/.gitkeep
+!results/metrics/.gitkeep
+!results/models/.gitkeep
+
+# Model artifacts
+*.pkl
+*.joblib
+*.model
+*.json
+
+# Logs
+*.log
