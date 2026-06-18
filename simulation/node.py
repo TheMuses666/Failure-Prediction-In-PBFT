@@ -83,6 +83,7 @@ class Byzantine_Node(Node):
 
         elif self.fault_type == 'delay':
 
-            time.sleep(BYZANTINE_DELAY_MS / 1000)
-            target_node.receive_message(message)
+            delayed_message = message.copy()
+            delayed_message["simulated_delay_ms"] = BYZANTINE_DELAY_MS
+            target_node.receive_message(delayed_message)
 

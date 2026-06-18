@@ -129,10 +129,10 @@ Expected:
 
 ### Step 5 — Feature Extraction
 
-- [ ] Implement `collection/feature_extractor.py`
-- [ ] Return all 11 feature columns with numeric values
-- [ ] Remove all `None` feature placeholders from generated records
-- [ ] Smoke test `feature_extractor.py`
+- [x] Implement `collection/feature_extractor.py`
+- [x] Return all 11 feature columns with numeric values
+- [x] Remove all `None` feature placeholders from generated records
+- [x] Smoke test `feature_extractor.py`
 
 Test:
 
