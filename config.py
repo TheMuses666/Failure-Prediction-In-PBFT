@@ -89,8 +89,6 @@ TARGET_COLUMN = "label"
 # Network settings
 # =========================
 
-# Latency is sampled as gauss(mean=BASE_MESSAGE_LATENCY_MS, std=LATENCY_JITTER_MS),
-# clipped at 0
 BASE_MESSAGE_LATENCY_MS = 20
 LATENCY_JITTER_MS = 10
 MESSAGE_DROP_PROBABILITY = 0.02

@@ -1,5 +1,26 @@
-import random, simpy, dataclasses
+"""
+SimPy-based discrete-event message delivery layer.
+
+The network owns the SimPy Environment for the simulation. Every message
+is delivered via a SimPy process that yields a timeout to advance simulated
+time; no wall-clock sleeping is used. This lets a full PBFT round run in
+a fraction of a real second.
+
+Design contract:
+  - send_message / broadcast are plain methods that register events and
+    return immediately (no yield).
+  - _deliver is the only generator (process): it yields env.timeout(latency),
+    then evaluates the drop decision *after* the timeout so the drop event
+    is logged at the moment the message physically would have arrived.
+  - All randomness goes through self.rng so a fixed seed makes a run
+    fully reproducible (required for paper-grade experiments).
+"""
+
+import random
+import dataclasses
 from collections import defaultdict
+
+import simpy
 
 from simulation.message import Message
 from config import (
@@ -21,22 +42,22 @@ class SimPyNetwork:
         drop_rate: float = MESSAGE_DROP_PROBABILITY,
         seed: int = RANDOM_SEED,
     ):
-        # Save config
+        # SimPy scheduler and latency / drop configuration.
         self.env = env
         self.latency_mean = latency_mean
-        self.drop_rate = drop_rate
         self.latency_std = latency_std
+        self.drop_rate = drop_rate
 
+        # Reproducible RNG. Never use the global `random` module here —
+        # different runs would diverge and break experiment replication.
+        self.rng = random.Random(seed)
 
-        # Randomness
-        self.rng =random.Random(seed)
-
-        # Initilise defualt
-        self.nodes: dict[int, "Node"] = {}
-        self.message_log: list[Message] = []
-        self.round_stats = defaultdict(lambda:{
-            'sent': 0, 'delivered':0, 'dropped':0,
-            'delayed': 0, 'replayed':0, 'equivocated':0,
+        # Runtime state.
+        self.nodes: dict[int, "Node"] = {}             # node_id -> Node, populated via register_node.
+        self.message_log: list[Message] = []           # Full history; per-message inspection (Phase 5).
+        self.round_stats = defaultdict(lambda: {        # Per-round counters (Phase 7 CSV columns).
+            'sent': 0, 'delivered': 0, 'dropped': 0,
+            'delayed': 0, 'replayed': 0, 'equivocated': 0,
         })
         self.next_message_id = 0
 
@@ -45,17 +66,17 @@ class SimPyNetwork:
     # =========================
 
     def register_node(self, node):
+        """Attach a Node so the network can deliver messages to it by id."""
         self.nodes[node.node_id] = node
-
 
     # =========================
     # Latency sampling
     # =========================
 
     def sample_latency(self) -> float:
+        """Gaussian latency sample, clipped at 0 to avoid negative delays."""
         raw = self.rng.gauss(self.latency_mean, self.latency_std)
         return max(0.0, raw)
-
 
     # =========================
     # Send / Broadcast
@@ -63,28 +84,33 @@ class SimPyNetwork:
 
     def send_message(self, msg: Message) -> None:
         """
-        发送一条消息。普通方法,不 yield,立即返回。
-        负责:打 send_time、记日志、累加 sent 计数、启动 _deliver process。
+        Hand off a single message to the network.
+
+        Plain method (no yield): timestamps, logs, increments counters,
+        and spawns the _deliver process. Returns immediately so that
+        broadcast() can dispatch many messages in zero simulated time.
         """
         msg.send_time = self.env.now
         self.message_log.append(msg)
-        self.round_stats[msg.round_id]['sent'] +=1
+        self.round_stats[msg.round_id]['sent'] += 1
         self.env.process(self._deliver(msg))
-
 
     def broadcast(self, sender_id: int, msg_template: Message, receiver_ids: list[int]) -> None:
         """
-        把一条消息广播给多个 receiver。普通方法,不 yield。
-        提示:每个 receiver 需要一份独立的 Message 副本(避免共享 delivery_time 等字段)。
+        Send a copy of msg_template to each receiver.
+
+        Each receiver gets an independent copy so per-message fields like
+        delivery_time, message_id, and receiver_id can be set without
+        clobbering siblings. dataclasses.replace gives us a cheap shallow
+        copy with the overridden fields.
         """
         for r_id in receiver_ids:
             new_msg = dataclasses.replace(
                 msg_template,
-                receiver_id = r_id,
-                message_id = self._new_message_id()
+                receiver_id=r_id,
+                message_id=self._new_message_id(),
             )
             self.send_message(new_msg)
-
 
     # =========================
     # Internal delivery process
@@ -92,25 +118,29 @@ class SimPyNetwork:
 
     def _deliver(self, msg: Message):
         """
-        SimPy process。这是唯一带 yield 的方法。
-        流程:采样延迟 → yield timeout → 判 drop → 写 delivery_time → 投递到 receiver。
+        SimPy process. The only method in this class that yields.
+
+        Flow: sample latency -> yield timeout -> decide drop AFTER the
+        timeout (drops are timestamped at the would-be arrival moment,
+        matching the physics of in-flight packet loss) -> stamp
+        delivery_time -> hand the message to the receiver node.
         """
         latency = self.sample_latency()
         yield self.env.timeout(latency)
 
         if self.rng.random() < self.drop_rate:
-            self.round_stats[msg.round_id]['dropped'] +=1
+            self.round_stats[msg.round_id]['dropped'] += 1
             return
 
         msg.delivery_time = self.env.now
-        self.round_stats[msg.round_id]['delivered'] +=1
+        self.round_stats[msg.round_id]['delivered'] += 1
         self.nodes[msg.receiver_id].receive(msg)
 
     # =========================
-    # Helpers (optional, but handy)
+    # Helpers
     # =========================
 
     def _new_message_id(self) -> int:
-        """生成自增的消息 id(可选工具方法)。"""
+        """Monotonically increasing id, keeps every broadcast copy unique."""
         self.next_message_id += 1
         return self.next_message_id

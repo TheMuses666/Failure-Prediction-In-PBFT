@@ -97,33 +97,33 @@ simulation/simpy_network.py
 
 ### Requirements
 
-- [ ] Use `simpy.Environment`
-- [ ] Use `env.now` as simulated time
-- [ ] Do not use `time.sleep()`
-- [ ] Implement message delivery through scheduled events
-- [ ] Track sent, delivered, dropped, delayed, replayed, and equivocated messages
+- [x] Use `simpy.Environment`
+- [x] Use `env.now` as simulated time
+- [x] Do not use `time.sleep()`
+- [x] Implement message delivery through scheduled events
+- [x] Track sent, delivered, dropped, delayed, replayed, and equivocated messages
 
 ### `Message` Fields
 
-- [ ] `message_id`
-- [ ] `message_type`
-- [ ] `sender_id`
-- [ ] `receiver_id`
-- [ ] `round_id`
-- [ ] `content`
-- [ ] `send_time`
-- [ ] `delivery_time`
-- [ ] `fault_type`
-- [ ] `is_corrupt`
+- [x] `message_id`
+- [x] `message_type`
+- [x] `sender_id`
+- [x] `receiver_id`
+- [x] `round_id`
+- [x] `content`
+- [x] `send_time`
+- [x] `delivery_time`
+- [x] `fault_type`
+- [x] `is_corrupt`
 
 ### `SimPyNetwork` Responsibilities
 
-- [ ] `send_message()`
-- [ ] `broadcast()`
-- [ ] latency sampling
-- [ ] message drop simulation
-- [ ] message delivery log
-- [ ] per-round message statistics
+- [x] `send_message()`
+- [x] `broadcast()`
+- [x] latency sampling
+- [x] message drop simulation
+- [x] message delivery log
+- [x] per-round message statistics
 
 ### Smoke Test
 
@@ -156,26 +156,26 @@ simulation/node.py
 
 ### Node State
 
-- [ ] `node_id`
-- [ ] `is_byzantine`
-- [ ] `fault_type`
-- [ ] `received_messages`
-- [ ] `prepare_log`
-- [ ] `commit_log`
-- [ ] `phase_times`
-- [ ] `committed_rounds`
-- [ ] `first_response_time`
+- [x] `node_id`
+- [x] `is_byzantine`
+- [x] `fault_type`
+- [x] `received_messages`
+- [x] `prepare_log`
+- [x] `commit_log`
+- [x] `phase_times`
+- [x] `committed_rounds`
+- [x] `first_response_time`
 
 ### Behaviour
 
-- [ ] receive `pre_prepare`
-- [ ] receive `prepare`
-- [ ] receive `commit`
-- [ ] record message arrival time
-- [ ] record phase entry time
-- [ ] detect prepare quorum
-- [ ] detect commit quorum
-- [ ] mark round committed
+- [x] receive `pre_prepare`
+- [x] receive `prepare`
+- [x] receive `commit`
+- [x] record message arrival time
+- [x] record phase entry time
+- [x] detect prepare quorum
+- [x] detect commit quorum
+- [x] mark round committed
 
 ### Smoke Test
 
@@ -185,9 +185,9 @@ simulation/node.py
 
 ### Pass Criteria
 
-- [ ] Node can receive messages.
-- [ ] Node can count prepare and commit messages per round.
-- [ ] Node can detect quorum for a round.
+- [x] Node can receive messages.
+- [x] Node can count prepare and commit messages per round.
+- [x] Node can detect quorum for a round.
 
 **Deliverable:** Event-driven PBFT replica state model.
 
