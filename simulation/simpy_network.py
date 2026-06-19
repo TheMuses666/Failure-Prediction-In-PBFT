@@ -41,12 +41,15 @@ class SimPyNetwork:
         latency_std: float = LATENCY_JITTER_MS,
         drop_rate: float = MESSAGE_DROP_PROBABILITY,
         seed: int = RANDOM_SEED,
+        fault_injector=None
     ):
         # SimPy scheduler and latency / drop configuration.
         self.env = env
         self.latency_mean = latency_mean
         self.latency_std = latency_std
         self.drop_rate = drop_rate
+        # Phase 4 attacker hook. None == honest network (the baseline / normal case).
+        self.fault_injector = fault_injector
 
         # Reproducible RNG. Never use the global `random` module here —
         # different runs would diverge and break experiment replication.
@@ -93,7 +96,28 @@ class SimPyNetwork:
         msg.send_time = self.env.now
         self.message_log.append(msg)
         self.round_stats[msg.round_id]['sent'] += 1
-        self.env.process(self._deliver(msg))
+        if self.fault_injector is None:
+            self.env.process(self._deliver(msg))
+            return
+        
+        result = self.fault_injector.on_send(msg)
+
+        if result is None:
+            self.round_stats[msg.round_id]['dropped'] +=1
+            return
+        
+        for i, out_msg in enumerate(result):
+            if i>0:
+                out_msg.message_id = self._new_message_id()
+                out_msg.send_time = self.env.now
+                self.message_log.append(out_msg)
+                self.round_stats[msg.round_id]['sent'] +=1
+                if out_msg.fault_type == 'replay':
+                    self.round_stats[msg.round_id]['replayed'] += 1
+            
+            if out_msg.fault_type == 'equivocation':
+                self.round_stats[msg.round_id]['equivocated'] += 1
+            self.env.process(self._deliver(out_msg))
 
     def broadcast(self, sender_id: int, msg_template: Message, receiver_ids: list[int]) -> None:
         """
@@ -126,6 +150,13 @@ class SimPyNetwork:
         delivery_time -> hand the message to the receiver node.
         """
         latency = self.sample_latency()
+
+        if self.fault_injector is not None:
+            extra = self.fault_injector.extra_latency(msg)
+            if extra>0:
+                latency += extra
+                msg.fault_type = 'delay'
+                self.round_stats[msg.round_id]['delayed'] +=1
         yield self.env.timeout(latency)
 
         if self.rng.random() < self.drop_rate:

@@ -6,7 +6,7 @@ Uses a simpy.Event to wait for either commit-quorum success or timeout.
 """
 
 import simpy
-
+from simulation.fault_injector import FaultInjector
 from simulation.simpy_network import SimPyNetwork
 from simulation.node import Node
 from config import NUM_NODES, CONSENSUS_TIMEOUT_MS, RANDOM_SEED
@@ -32,11 +32,17 @@ def run_pbft_round(
     
     # Set up environment and network
     env = simpy.Environment()
-    net = SimPyNetwork(env, seed=seed)
+    byzantine_set = set(byzantine_node_ids or [])
+    injector = FaultInjector(
+        fault_type=fault_type,
+        byzantine_node_ids=byzantine_set,
+        seed=seed,
+    )
+    net = SimPyNetwork(env, seed=seed,fault_injector=injector)
 
     # Nodes
     nodes = []
-    byzantine_set = set(byzantine_node_ids or [])
+
     
     for i in range(total_nodes):
         is_byz = i in byzantine_set
@@ -84,7 +90,7 @@ def run_pbft_round(
         'success': final_event.triggered,
         'timeout': not final_event.triggered,
         'consensus_end_time': first_commit_time,
-        'simulation_end_time': env.now(),
+        'simulation_end_time': env.now,
         'committed_nodes_count': len(committed_nodes_set),
         'committed_node_ids': sorted(committed_nodes_set),
         '_nodes': nodes,
