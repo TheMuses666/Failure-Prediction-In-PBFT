@@ -14,7 +14,7 @@ can pull a single round's data without filtering global logs.
 """
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable
 
 from simulation.message import Message
 from config import NUM_NODES
@@ -71,6 +71,14 @@ class Node:
         # feature; Byzantine 'delay' nodes are expected to stand out here.
         self.first_response_time: dict[int, float]       = {}
 
+        # round_id -> simpy.Event, fired the moment this node first reaches commit quorum.
+        # Set by the orchestrator (pbft.run_pbft_round) before the round starts.
+        self.commit_callbacks: dict[int, Callable[[int], None]] = {}
+
+    def set_commit_callback(self, round_id: int, callback) -> None:
+        """Orchestrator hands us the event we should fire when this round commits."""
+        self.commit_callbacks[round_id] = callback
+
     # =========================
     # Message reception
     # =========================
@@ -108,6 +116,11 @@ class Node:
         if len(self.commit_log[msg.round_id][msg.content]) == self.quorum_size:
             self.committed_rounds.add(msg.round_id)
             self.phase_times[msg.round_id]['commit'] = self.network.env.now
+            # Notify orchestrator. `triggered` guards against firing twice when
+            # other nodes also cross the threshold (Event.succeed raises otherwise).
+            callback = self.commit_callbacks.get(msg.round_id)
+            if callback is not None:
+                callback(self.node_id)
 
     # =========================
     # Broadcasting helpers
@@ -149,6 +162,19 @@ class Node:
         )
         receiver_ids = [i for i in range(self.total_nodes) if i != self.node_id]
         self.network.broadcast(self.node_id, message_template, receiver_ids)
+
+    def propose(self, round_id: int, content: Any) -> None:
+        """Primary entry point. Broadcasts pre_prepare to all backups."""
+        template = Message(
+            message_id=0,
+            message_type='pre_prepare',
+            sender_id=self.node_id,
+            receiver_id=-1,
+            round_id=round_id,
+            content=content,
+        )
+        receivers = [i for i in range(self.total_nodes) if i != self.node_id]
+        self.network.broadcast(self.node_id, template, receivers)
 
     # =========================
     # Queries

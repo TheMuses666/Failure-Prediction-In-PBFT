@@ -209,12 +209,12 @@ simulation/pbft.py
 
 ### Required Phases
 
-- [ ] client request
-- [ ] pre-prepare broadcast by primary
-- [ ] prepare broadcast after receiving pre-prepare
-- [ ] commit broadcast after prepare quorum
-- [ ] simplified reply phase after commit quorum
-- [ ] timeout event
+- [x] client request
+- [x] pre-prepare broadcast by primary
+- [x] prepare broadcast after receiving pre-prepare
+- [x] commit broadcast after prepare quorum
+- [x] simplified reply phase after commit quorum
+- [x] timeout event
 
 ### Normal Round Smoke Test
 
@@ -224,10 +224,10 @@ simulation/pbft.py
 
 ### Pass Criteria
 
-- [ ] Normal round succeeds with 7 nodes and 0 Byzantine nodes.
-- [ ] Commit quorum is reached.
-- [ ] Round duration is below `CONSENSUS_TIMEOUT_MS`.
-- [ ] Honest nodes commit consistently.
+- [x] Normal round succeeds with 7 nodes and 0 Byzantine nodes.
+- [x] Commit quorum is reached.
+- [x] Round duration is below `CONSENSUS_TIMEOUT_MS`.
+- [x] Honest nodes commit consistently.
 
 **Deliverable:** One successful normal PBFT round using SimPy time.
 
