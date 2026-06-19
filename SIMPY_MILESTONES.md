@@ -99,7 +99,7 @@ simulation/simpy_network.py
 
 - [ ] Use `simpy.Environment`
 - [ ] Use `env.now` as simulated time
-- [x] Do not use `time.sleep()`
+- [ ] Do not use `time.sleep()`
 - [ ] Implement message delivery through scheduled events
 - [ ] Track sent, delivered, dropped, delayed, replayed, and equivocated messages
 
@@ -133,8 +133,8 @@ simulation/simpy_network.py
 
 ### Pass Criteria
 
-- [ ] One message can be scheduled and delivered at simulated time.
-- [ ] Delivery time is based on `env.now`, not wall-clock time.
+- [x] One message can be scheduled and delivered at simulated time.
+- [x] Delivery time is based on `env.now`, not wall-clock time.
 
 **Deliverable:** Working SimPy message delivery layer.
 

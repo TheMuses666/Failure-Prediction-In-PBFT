@@ -9,7 +9,7 @@ class Message:
     receiver_id: int
     round_id: int
     content: Any
-    send_time: float 
+    send_time: float | None = None
     delivery_time: float | None = None
     fault_type: str | None = None
     is_corrupt: bool = False
