@@ -524,9 +524,26 @@ collection/feature_extractor.py
 ### Smoke Test
 
 ```text
-Run normal, silent, delay, replay, and equivocation rounds.
+Run normal, silent, delay, replay, equivocation, and forgery rounds.
 Print all 11 features for each fault type.
 ```
+
+### Auxiliary Metadata and Counters
+
+These auxiliary fields are recorded for validation, ablation, and report interpretation. They MUST NOT be used as model input features unless the corresponding ablation experiment explicitly opts in (see Phase 11).
+
+- [ ] `forged`
+- [ ] `replayed`
+- [ ] `same_round_replayed`
+- [ ] `stale_replayed`
+- [ ] `equivocated`
+- [ ] `delayed`
+- [ ] `silent_mode`
+- [ ] `delay_probability`
+- [ ] `delay_distribution`
+- [ ] `strict_round_validation`
+
+Phase 4c modes must preserve all 11 core features and populate the relevant auxiliary counters.
 
 ### Pass Criteria
 
@@ -559,6 +576,8 @@ collection/label_generator.py
 - [ ] timeout occurred
 - [ ] commit quorum not reached
 - [ ] too many honest nodes failed to commit
+- [ ] forgery or equivocation prevents valid quorum
+- [ ] stale replay affects current-round quorum when `STRICT_ROUND_VALIDATION` is `False` (ablation runs only)
 
 #### Degraded — Label 1
 
@@ -566,6 +585,10 @@ collection/label_generator.py
 - [ ] message drop rate exceeds warning threshold
 - [ ] view change triggered
 - [ ] message consistency below warning threshold
+- [ ] `forged > 0` and commit still succeeds: safety is not violated, but suspicious sender activity is present
+- [ ] `same_round_replayed > 0` or `stale_replayed > 0`, while quorum remains valid
+- [ ] delay jitter causes a late but successful commit
+- [ ] `silent_mode` causes partial omission but quorum still reaches commit
 
 #### Normal — Label 0
 
@@ -580,6 +603,9 @@ collection/label_generator.py
 normal round -> 0
 delay but committed late -> 1
 silent causing no quorum -> 2
+forgery with successful commit and forged > 0 -> 1
+forgery causing no commit or quorum on wrong content -> 2
+strict validation blocks stale replay -> not failure solely because stale_replayed > 0
 ```
 
 ### Pass Criteria
@@ -615,11 +641,37 @@ main.py
 
 ### Full Run
 
+Main dataset:
+
 - [ ] 400 normal rounds
 - [ ] 200 silent rounds
 - [ ] 200 replay rounds
 - [ ] 200 equivocation rounds
 - [ ] 200 delay rounds
+- [ ] total: 1200 rows
+- [ ] used for model training, validation, and testing with 70 / 10 / 20 split
+
+Extended robustness dataset:
+
+- [ ] 200 forgery rounds with `fault_intensity = 1.0`
+- [ ] 100 silent rounds with `silent_mode = "prepare"`
+- [ ] 100 silent rounds with `silent_mode = "commit"`
+- [ ] 100 silent rounds with `silent_mode = "all"`
+- [ ] 100 delay rounds with `delay_distribution = "gaussian"`
+- [ ] 100 delay rounds with `delay_distribution = "lognormal"`
+- [ ] 100 stale-replay rounds
+- [ ] total: 800 rows
+- [ ] used for out-of-distribution robustness evaluation only, not model training
+
+Forgery sensitivity runs:
+
+- [ ] `fault_intensity in {0.2, 0.5, 1.0}`
+- [ ] used for Phase 11 authentication-ablation analysis
+
+Config split:
+
+- [ ] Main dataset uses `config.FAULT_TYPES` (4 classes plus normal)
+- [ ] Extended dataset uses `config.EXTENDED_FAULT_TYPES` (forgery plus Phase 4c subtypes)
 
 ### Output
 
@@ -631,11 +683,19 @@ data/raw/consensus_data.csv
 
 - [ ] `round_id`
 - [ ] `fault_type`
+- [ ] `fault_subtype`
+- [ ] `silent_mode`
+- [ ] `delay_probability`
+- [ ] `delay_distribution`
+- [ ] `strict_round_validation`
 - [ ] `byzantine_node_ids`
 - [ ] `success`
 - [ ] `timeout`
+- [ ] auxiliary counters, including `forged`, `same_round_replayed`, and `stale_replayed`
 - [ ] all 11 features
 - [ ] `label`
+
+`fault_subtype` should be present in both datasets. The main dataset should set it to `base` or `null` to keep the schema consistent.
 
 ### Verification
 
@@ -650,6 +710,7 @@ data/raw/consensus_data.csv
 - [ ] all fault types present
 - [ ] labels are not all one class
 - [ ] no missing feature values
+- [ ] extended robustness dataset is generated separately from the main training dataset
 
 **Deliverable:** `data/raw/consensus_data.csv`
 
@@ -670,15 +731,25 @@ data/raw/consensus_data.csv
 - [ ] silent message drop rate
 - [ ] equivocation message consistency
 - [ ] replay duplicate/replay count
+- [ ] forgery `forged` count and quorum timing
+- [ ] same-round replay versus stale replay counts
+- [ ] strict round validation blocks stale replay by default
+- [ ] delay jitter increases latency variance
+- [ ] `silent_mode` changes message drop pattern by phase
 - [ ] label balance
 - [ ] feature correlation
+- [ ] Phase 4c variance comparison across >=50 seeded runs
 
 ### Outputs
 
 ```text
 results/figures/feature_distribution_by_fault.png
+results/figures/phase4c_variance_comparison.png
 results/metrics/simulation_summary.csv
+results/metrics/advanced_fault_summary.csv
 ```
+
+Note: `phase4c_variance_comparison.png` is the operational proof for Phase 4c pass criterion PC2 ("richer feature distributions"). This figure must be generated before declaring Phase 4c complete.
 
 ### Pass Criteria
 
@@ -712,6 +783,9 @@ ml/evaluation.py
 
 - [ ] feature normalisation
 - [ ] train / validation / test split: 70 / 10 / 20
+- [ ] train main ML models on the main dataset by default
+- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default
+- [ ] include advanced modes in training only when an explicit Phase 11 robustness experiment opts in, e.g. `train_on_extended=True`
 - [ ] Decision Tree
 - [ ] Random Forest
 - [ ] XGBoost
@@ -786,7 +860,7 @@ baseline/static_detection.py
 
 **Secondary reference:** Talaria for simulation-study reporting style, and ai-bft-consensus for ML + consensus discussion angles.
 
-### Experiments
+### 11.A Main Experiments
 
 - [ ] ablation test
 - [ ] robustness test
@@ -794,6 +868,27 @@ baseline/static_detection.py
 - [ ] per-fault-type analysis
 - [ ] prediction lead time analysis
 - [ ] SHAP feature importance
+
+### 11.B Advanced Fault Robustness
+
+- [ ] Train on the main fault set only
+- [ ] Test on forgery and Phase 4c enhanced modes as out-of-distribution data
+- [ ] Report degradation in F1-score, recall, and confusion matrix quality
+- [ ] Optional opt-in run: `train_on_extended=True`
+
+### 11.C Authentication Ablation
+
+- [ ] Evaluate forgery as an authentication-ablation scenario
+- [ ] Compare `fault_intensity in {0.2, 0.5, 1.0}`
+- [ ] Report whether forged votes alter quorum timing or label distribution
+- [ ] Clearly state that production PBFT normally relies on authenticated messages
+
+### 11.D Strict-Round-Validation Ablation
+
+- [ ] Run stale replay with `STRICT_ROUND_VALIDATION=True`
+- [ ] Run stale replay with `STRICT_ROUND_VALIDATION=False`
+- [ ] Compare quorum behaviour, labels, and replay counters
+- [ ] Report whether stale replay becomes harmful only under the weakened validation setting
 
 ### Outputs
 
@@ -818,10 +913,9 @@ results/figures/scalability_curve.png
 
 ## Immediate Next Steps
 
-1. [ ] Add `simpy` to `requirements.txt`
-2. [ ] Implement `simulation/message.py`
-3. [ ] Implement `simulation/simpy_network.py`
-4. [ ] Run one-message delivery smoke test
-5. [ ] Implement event-driven `simulation/node.py`
-6. [ ] Run one normal PBFT round
-7. [ ] Run one delay-fault PBFT round
+Phase 4 and Phase 4b are complete. Phase 4c is specified as an enhanced realism extension. The next implementation steps are:
+
+1. [ ] Phase 5 feature extraction (`collection/feature_extractor.py`)
+2. [ ] Phase 6 label generation (`collection/label_generator.py`)
+3. [ ] Phase 7 main dataset generation (1200 rows)
+4. [ ] Pause to evaluate baseline ML performance before implementing Phase 4c enhanced modes
