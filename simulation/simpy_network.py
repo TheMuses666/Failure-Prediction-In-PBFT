@@ -107,13 +107,17 @@ class SimPyNetwork:
             return
         
         for i, out_msg in enumerate(result):
-            if i>0:
+            is_substitute = out_msg is not msg
+            is_extra = i>0
+
+            if is_substitute or is_extra:
                 out_msg.message_id = self._new_message_id()
                 out_msg.send_time = self.env.now
                 self.message_log.append(out_msg)
-                self.round_stats[msg.round_id]['sent'] +=1
-                if out_msg.fault_type == 'replay':
-                    self.round_stats[msg.round_id]['replayed'] += 1
+                if is_extra:
+                    self.round_stats[msg.round_id]['sent'] +=1
+                    if out_msg.fault_type == 'replay':
+                        self.round_stats[msg.round_id]['replayed'] += 1
             
             if out_msg.fault_type == 'equivocation':
                 self.round_stats[msg.round_id]['equivocated'] += 1

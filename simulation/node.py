@@ -164,7 +164,16 @@ class Node:
         self.network.broadcast(self.node_id, message_template, receiver_ids)
 
     def propose(self, round_id: int, content: Any) -> None:
-        """Primary entry point. Broadcasts pre_prepare to all backups."""
+        """
+        Primary entry point. Broadcasts pre_prepare to all backups, then also
+        broadcasts its own prepare so its vote counts in the prepare quorum.
+
+        Matches csienslab BFT-Simulator's pbft.js issueRequest(): primary sends
+        both pre_prepare and prepare. The Castro-Liskov original paper treats
+        pre_prepare as the primary's implicit prepare vote, but counting an
+        explicit prepare keeps the quorum check uniform across all replicas
+        (no special-case for primary_id in node.py's prepare_log lookup).
+        """
         template = Message(
             message_id=0,
             message_type='pre_prepare',
@@ -175,6 +184,7 @@ class Node:
         )
         receivers = [i for i in range(self.total_nodes) if i != self.node_id]
         self.network.broadcast(self.node_id, template, receivers)
+        self._broadcast_prepare(round_id,content)
 
     # =========================
     # Queries
