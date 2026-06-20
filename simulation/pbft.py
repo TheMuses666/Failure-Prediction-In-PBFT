@@ -9,7 +9,7 @@ import simpy
 from simulation.fault_injector import FaultInjector
 from simulation.simpy_network import SimPyNetwork
 from simulation.node import Node
-from config import NUM_NODES, CONSENSUS_TIMEOUT_MS, RANDOM_SEED
+from config import NUM_NODES, CONSENSUS_TIMEOUT_MS, RANDOM_SEED, STRICT_ROUND_VALIDATION
 
 def _wait_for_round(env, commit_event, timeout_ms):
     """
@@ -27,17 +27,41 @@ def run_pbft_round(
         byzantine_node_ids: list[int] | None=None,
         total_nodes:int=NUM_NODES,
         timeout_ms: float=CONSENSUS_TIMEOUT_MS,
-        seed: int=RANDOM_SEED
+        seed: int=RANDOM_SEED,
+
+        # Silent
+        silent_mode: str = 'all',
+
+        #delay
+        delay_probability: float = 1.0,
+        delay_mean_ms: float | None = None,
+        delay_jitter_ms: float = 0.0,
+        delay_distribution: str = 'gaussian',
+
+        # Replay fault related arguments
+        replay_mode: str = 'duplicate',
+        replay_buffer_size: int = 16,
+
+        injector: FaultInjector | None=None,
+
 ) -> dict:
     
     # Set up environment and network
     env = simpy.Environment()
     byzantine_set = set(byzantine_node_ids or [])
-    injector = FaultInjector(
-        fault_type=fault_type,
-        byzantine_node_ids=byzantine_set,
-        seed=seed,
-    )
+    if injector is None:
+        injector = FaultInjector(
+            fault_type=fault_type,
+            byzantine_node_ids=byzantine_set,
+            seed=seed,
+            silent_mode=silent_mode,
+            delay_probability=delay_probability,
+            delay_mean_ms=delay_mean_ms,
+            delay_jitter_ms=delay_jitter_ms,
+            delay_distribution=delay_distribution,
+            replay_mode=replay_mode,
+            replay_buffer_size=replay_buffer_size,
+        )
     net = SimPyNetwork(env, seed=seed,fault_injector=injector)
 
     # Nodes
@@ -93,7 +117,61 @@ def run_pbft_round(
         'simulation_end_time': env.now,
         'committed_nodes_count': len(committed_nodes_set),
         'committed_node_ids': sorted(committed_nodes_set),
+        'strict_round_validation': STRICT_ROUND_VALIDATION,
         '_nodes': nodes,
         '_network': net,
     }
 
+
+def run_pbft_simulation(
+        n_rounds: int,
+        fault_type: str = 'normal',
+        byzantine_node_ids: list[int] | None = None,
+        total_nodes: int = NUM_NODES,
+        timeout_ms: float = CONSENSUS_TIMEOUT_MS,
+        seed: int = RANDOM_SEED,
+        silent_mode: str = 'all',
+        delay_probability: float = 1.0,
+        delay_mean_ms: float | None=None,
+        delay_jitter_ms: float = 0.0,
+        delay_distribution: str = 'gaussian',
+        replay_mode: str = 'duplicate',
+        replay_buffer_size: int = 16,
+        start_round: int = 1,
+) -> list[dict]:
+    """
+    Run n_rounds consecutive PBFT rounds with ONE persistent FaultInjector.
+
+    The injector's replay_buffer accumulates Byzantine messages across rounds,
+    which is what makes Phase 4c.1 stale-round replay actually work in a
+    full simulation. The injector's RNG advances continuously so the entire
+    n_rounds run is deterministic given `seed`.
+    """
+    byzantine_set = set(byzantine_node_ids or [])
+    injector = FaultInjector(
+        fault_type=fault_type,
+        byzantine_node_ids=byzantine_set,
+        seed=seed,
+        silent_mode=silent_mode,
+        delay_probability=delay_probability,
+        delay_mean_ms=delay_mean_ms,
+        delay_jitter_ms=delay_jitter_ms,
+        delay_distribution=delay_distribution,
+        replay_mode=replay_mode,
+        replay_buffer_size=replay_buffer_size,
+    )        
+
+    results = []
+
+    for i in range(n_rounds):
+        results.append(run_pbft_round(
+            round_id=start_round+i,
+            fault_type=fault_type,
+            byzantine_node_ids=byzantine_node_ids,
+            total_nodes=total_nodes,
+            timeout_ms=timeout_ms,
+            seed=seed+i,
+            injector=injector,
+        ))
+    
+    return results

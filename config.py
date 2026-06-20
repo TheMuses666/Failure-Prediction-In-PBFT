@@ -29,6 +29,8 @@ TOTAL_SIMULATION_ROUNDS = ROUNDS_PER_FAULT * len(FAULT_TYPES) + NORMAL_ROUNDS
 
 RANDOM_SEED = 42
 
+STRICT_ROUND_VALIDATION = True
+
 # =========================
 # Label definition
 # =========================

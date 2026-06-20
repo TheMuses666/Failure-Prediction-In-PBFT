@@ -355,12 +355,12 @@ same-round duplicate emission
 
 Target behaviour:
 
-- [ ] Keep same-round duplicate replay as the baseline replay mode
-- [ ] Add optional stale-round replay mode
-- [ ] Store a small replay buffer of previously sent Byzantine messages
-- [ ] Replay a previous valid message with its old round metadata
-- [ ] Track same-round duplicates separately from stale-round replays
-- [ ] Ensure stale-round replay does not affect quorum unless a deliberate no-round-validation ablation is enabled
+- [x] Keep same-round duplicate replay as the baseline replay mode
+- [x] Add optional stale-round replay mode
+- [x] Store a small replay buffer of previously sent Byzantine messages
+- [x] Replay a previous valid message with its old round metadata
+- [x] Track same-round duplicates separately from stale-round replays
+- [x] Ensure stale-round replay does not affect quorum unless a deliberate no-round-validation ablation is enabled
 
 Prerequisite:
 
@@ -410,12 +410,12 @@ fixed extra delay, e.g. 300 ms
 
 Target behaviour:
 
-- [ ] Make delay probabilistic using `delay_probability`
-- [ ] Add jitter to Byzantine delay
-- [ ] Sample additional delay from a configurable distribution
-- [ ] Support at least Gaussian delay jitter
-- [ ] Optionally support lognormal delay for long-tail latency experiments
-- [ ] Keep lognormal disabled by default for backward-compatible Phase 4 smoke tests
+- [x] Make delay probabilistic using `delay_probability`
+- [x] Add jitter to Byzantine delay
+- [x] Sample additional delay from a configurable distribution
+- [x] Support at least Gaussian delay jitter
+- [x] Optionally support lognormal delay for long-tail latency experiments
+- [x] Keep lognormal disabled by default for backward-compatible Phase 4 smoke tests
 
 Parameter semantics:
 
@@ -458,13 +458,13 @@ Byzantine sender drops all messages with probability = fault_intensity
 
 Target behaviour:
 
-- [ ] Support probabilistic omission
-- [ ] Support phase-specific omission
-- [ ] Allow Byzantine node to omit only prepare messages
-- [ ] Allow Byzantine node to omit only commit messages
-- [ ] Allow Byzantine node to omit all consensus messages
-- [ ] Keep top-level `fault_type='silent'`
-- [ ] Add `silent_mode` as an attack parameter rather than expanding the top-level fault taxonomy
+- [x] Support probabilistic omission
+- [x] Support phase-specific omission
+- [x] Allow Byzantine node to omit only prepare messages
+- [x] Allow Byzantine node to omit only commit messages
+- [x] Allow Byzantine node to omit all consensus messages
+- [x] Keep top-level `fault_type='silent'`
+- [x] Add `silent_mode` as an attack parameter rather than expanding the top-level fault taxonomy
 
 Suggested modes:
 
@@ -483,9 +483,9 @@ silent_all -> all Byzantine consensus messages dropped
 
 ### Pass Criteria
 
-- [ ] Enhanced behaviours remain deterministic under fixed `RANDOM_SEED`
+- [x] Enhanced behaviours remain deterministic under fixed `RANDOM_SEED`
 - [ ] Enhanced behaviours produce richer feature distributions: at least one of `message_latency`, `message_drop_rate`, or `propagation_pattern` shows higher per-round variance under Phase 4c modes than under Phase 4 modes, measured across >=50 seeded runs of the same `fault_type`
-- [ ] Existing Phase 4 smoke tests still pass
+- [x] Existing Phase 4 smoke tests still pass
 - [ ] The report clearly distinguishes simple fault classes from enhanced realism modes
 
 **Deliverable:** More realistic message-level Byzantine behaviours for robustness experiments.
