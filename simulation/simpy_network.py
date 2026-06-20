@@ -61,6 +61,7 @@ class SimPyNetwork:
         self.round_stats = defaultdict(lambda: {        # Per-round counters (Phase 7 CSV columns).
             'sent': 0, 'delivered': 0, 'dropped': 0,
             'delayed': 0, 'replayed': 0, 'equivocated': 0,
+            'forged':0
         })
         self.next_message_id = 0
 
@@ -118,6 +119,8 @@ class SimPyNetwork:
                     self.round_stats[msg.round_id]['sent'] +=1
                     if out_msg.fault_type == 'replay':
                         self.round_stats[msg.round_id]['replayed'] += 1
+                    elif out_msg.fault_type == 'forgery':
+                        self.round_stats[msg.round_id]['forged'] += 1
             
             if out_msg.fault_type == 'equivocation':
                 self.round_stats[msg.round_id]['equivocated'] += 1

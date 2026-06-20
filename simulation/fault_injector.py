@@ -16,7 +16,7 @@ import random, dataclasses
 from typing import Any
 
 from simulation.message import Message
-from config import BYZANTINE_DELAY_MS, RANDOM_SEED
+from config import BYZANTINE_DELAY_MS, RANDOM_SEED, NUM_NODES
 
 
 class FaultInjector:
@@ -29,12 +29,15 @@ class FaultInjector:
         fault_intensity: float = 1.0,
         extra_delay_ms: float = BYZANTINE_DELAY_MS,
         seed: int = RANDOM_SEED,
+        total_nodes: int = NUM_NODES
     ):
         self.fault_type = fault_type
         self.byzantine_ids = set(byzantine_node_ids or [])
         self.fault_intensity = fault_intensity
         self.extra_delay_ms = extra_delay_ms
         self.rng = random.Random(seed)
+        self.total_nodes = total_nodes
+        self.honest_ids = set(range(total_nodes)) - self.byzantine_ids
 
     # =========================
     # Hooks called by SimPyNetwork
@@ -60,6 +63,8 @@ class FaultInjector:
             return self._on_replay(msg)
         if self.fault_type == 'equivocation':
             return self._on_equivocation(msg)
+        if self.fault_type == 'forgery':
+            return self._on_forgery(msg)
         # 'normal' or 'delay': no rewrite, only timing.
         return [msg]
 
@@ -92,7 +97,7 @@ class FaultInjector:
         return [msg, duplicate]
 
     def _on_equivocation(self, msg: Message) -> list[Message] | None:
-        # TODO Phase 4: fork content based on receiver_id
+        # Phase 4: fork content based on receiver_id
         if msg.receiver_id % 2 == 0:
             return [msg]
         forked = dataclasses.replace(
@@ -103,3 +108,23 @@ class FaultInjector:
             fault_type = 'equivocation'
         )
         return [forked]
+    
+    def _on_forgery(self, msg: Message) -> list[Message] | None:
+        if self.rng.random() >= self.fault_intensity:
+            return [msg]
+
+        candidates = self.honest_ids - set([msg.sender_id])
+
+        if not candidates:
+            return [msg]
+
+        forged_node = self.rng.choice(sorted(candidates))
+
+        forged = dataclasses.replace(
+            msg,
+            message_id = 0,
+            sender_id = forged_node,
+            is_corrupt = True,
+            fault_type = 'forgery'
+        )
+        return [msg,forged]

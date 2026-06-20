@@ -251,18 +251,18 @@ simulation/fault_injector.py
 
 ### Fault Types
 
-- [ ] `silent`: Byzantine node does not send selected messages.
-- [ ] `delay`: Byzantine messages receive additional simulated latency.
-- [ ] `replay`: Byzantine node resends old messages.
-- [ ] `equivocation`: Byzantine node sends different content to different receivers.
+- [x] `silent`: Byzantine node does not send selected messages.
+- [x] `delay`: Byzantine messages receive additional simulated latency.
+- [x] `replay`: Byzantine node resends old messages.
+- [x] `equivocation`: Byzantine node sends different content to different receivers.
 
 ### Configuration
 
-- [ ] `fault_type`
-- [ ] `fault_ratio`
-- [ ] `fault_intensity`
-- [ ] `byzantine_node_ids`
-- [ ] `random_seed`
+- [x] `fault_type`
+- [x] `fault_ratio`
+- [x] `fault_intensity`
+- [x] `byzantine_node_ids`
+- [x] `random_seed`
 
 ### Smoke Tests
 
@@ -275,8 +275,8 @@ equivocation  -> message_consistency decreases
 
 ### Pass Criteria
 
-- [ ] Each fault type produces distinguishable metrics.
-- [ ] Fault behaviour is deterministic under fixed random seed.
+- [x] Each fault type produces distinguishable metrics.
+- [x] Fault behaviour is deterministic under fixed random seed.
 
 **Deliverable:** Four controllable Byzantine fault behaviours.
 
@@ -296,25 +296,25 @@ Mechanism: `prepare_log[round_id][content]` and `commit_log[round_id][content]` 
 
 ### Fault Type
 
-- [ ] `forgery` / `sender_spoofing`: Byzantine node sends a valid-looking prepare or commit message using a forged honest `sender_id`.
+- [x] `forgery` / `sender_spoofing`: Byzantine node sends a valid-looking prepare or commit message using a forged honest `sender_id`.
 
 ### Requirements
 
-- [ ] Implement `_on_forgery()` in `simulation/fault_injector.py`
-- [ ] Select forged `sender_id` from honest node IDs, not Byzantine node IDs
-- [ ] Forged `sender_id` must differ from the original `msg.sender_id`
-- [ ] Mark forged messages with `is_corrupt=True`
-- [ ] Mark forged messages with `fault_type='forgery'`
-- [ ] Implementation pattern: emit both messages — `return [msg, forged]`
-- [ ] The original message preserves the Byzantine node's own vote
-- [ ] The forged copy is the attack payload and steals a fresh honest identity
-- [ ] `fault_intensity` controls the probability that a Byzantine send produces a forged copy
-- [ ] `fault_intensity=1.0` means every Byzantine send creates one forged copy
-- [ ] `fault_intensity=0.4` means roughly 40% of Byzantine sends create one forged copy
-- [ ] Add `forged` to `round_stats`, matching the existing past-tense naming style: `delivered`, `dropped`, `delayed`, `replayed`, `equivocated`
-- [ ] Verify forged sender IDs appear in `prepare_log` or `commit_log`
-- [ ] If no honest sender candidate exists, skip forgery and return `[msg]` as a graceful fallback
-- [ ] Document that this fault assumes no cryptographic signature verification
+- [x] Implement `_on_forgery()` in `simulation/fault_injector.py`
+- [x] Select forged `sender_id` from honest node IDs, not Byzantine node IDs
+- [x] Forged `sender_id` must differ from the original `msg.sender_id`
+- [x] Mark forged messages with `is_corrupt=True`
+- [x] Mark forged messages with `fault_type='forgery'`
+- [x] Implementation pattern: emit both messages — `return [msg, forged]`
+- [x] The original message preserves the Byzantine node's own vote
+- [x] The forged copy is the attack payload and steals a fresh honest identity
+- [x] `fault_intensity` controls the probability that a Byzantine send produces a forged copy
+- [x] `fault_intensity=1.0` means every Byzantine send creates one forged copy
+- [x] `fault_intensity=0.4` means roughly 40% of Byzantine sends create one forged copy
+- [x] Add `forged` to `round_stats`, matching the existing past-tense naming style: `delivered`, `dropped`, `delayed`, `replayed`, `equivocated`
+- [x] Verify forged sender IDs appear in `prepare_log` or `commit_log`
+- [x] If no honest sender candidate exists, skip forgery and return `[msg]` as a graceful fallback
+- [x] Document that this fault assumes no cryptographic signature verification
 
 ### Smoke Test
 
@@ -327,9 +327,9 @@ forgery -> quorum may be reached with fewer real honest votes than baseline
 
 ### Pass Criteria
 
-- [ ] Forgery produces distinguishable metrics.
-- [ ] Forged votes can affect quorum behaviour in the no-authentication setting.
-- [ ] The report clearly explains that real PBFT normally relies on authenticated messages, so forgery is an authentication-ablation scenario.
+- [x] Forgery produces distinguishable metrics.
+- [x] Forged votes can affect quorum behaviour in the no-authentication setting.
+- [x] The report clearly explains that real PBFT normally relies on authenticated messages, so forgery is an authentication-ablation scenario.
 
 **Deliverable:** Optional advanced sender-spoofing fault for robustness analysis.
 
