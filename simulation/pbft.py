@@ -11,7 +11,7 @@ from simulation.simpy_network import SimPyNetwork
 from simulation.node import Node
 from config import NUM_NODES, CONSENSUS_TIMEOUT_MS, RANDOM_SEED, STRICT_ROUND_VALIDATION
 
-def _wait_for_round(env, commit_event, timeout_ms):
+def _wait_for_round(env, commit_event, timeout_ms, outcomes):
     """
     SimPy process. Yields until either commit succeeds or the timeout fires.
 
@@ -19,7 +19,11 @@ def _wait_for_round(env, commit_event, timeout_ms):
     inspect commit_event.triggered to know what happened.
     """
     timeout_event = env.timeout(timeout_ms)
-    yield env.any_of([commit_event, timeout_event])
+    result = yield env.any_of([commit_event, timeout_event])
+
+    outcomes['committed_in_time'] = commit_event in result
+    outcomes['decision_time'] = env.now
+
 
 def run_pbft_round(
         round_id:int,
@@ -98,22 +102,24 @@ def run_pbft_round(
         n.set_commit_callback(round_id, on_commit)
 
     #
-    env.process(_wait_for_round(env, final_event, timeout_ms))
+    outcomes = {}
+
+    env.process(_wait_for_round(env, final_event, timeout_ms, outcomes))
     primary.propose(round_id, content=f"req_{round_id}")
 
     env.run()
 
-    commit_times = [n.phase_times[round_id].get('commit') for n in nodes if 'commit' in n.phase_times[round_id]]
-    first_commit_time = min(commit_times) if commit_times else None
+    success = outcomes['committed_in_time']
+    timeout = not success
 
     return {
         'round_id': round_id,
         'fault_type': fault_type,
         'byzantine_node_ids': sorted(byzantine_set),
         'primary_id': primary_id,
-        'success': final_event.triggered,
-        'timeout': not final_event.triggered,
-        'consensus_end_time': first_commit_time,
+        'success': success,
+        'timeout': timeout,
+        'consensus_end_time': outcomes['decision_time'] if success else None,
         'simulation_end_time': env.now,
         'committed_nodes_count': len(committed_nodes_set),
         'committed_node_ids': sorted(committed_nodes_set),

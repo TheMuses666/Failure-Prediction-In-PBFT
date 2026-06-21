@@ -85,6 +85,22 @@ FEATURE_COLUMNS = [
     "vote_deviation"
 ]
 
+AUXILIARY_COLUMNS = [
+    # Per-round event counters
+    "forged",
+    "replayed",
+    "same_round_replayed",
+    "stale_replayed",
+    "equivocated",
+    "delayed",
+
+    # FaultInjector configuration snapshot
+    "silent_mode",
+    "delay_probability",
+    "delay_distribution",
+    "strict_round_validation",
+]
+
 TARGET_COLUMN = "label"
 
 # =========================
@@ -113,3 +129,14 @@ METRICS_FILE = RESULTS_METRICS_DIR / "model_metrics.csv"
 
 SCALABILITY_NODE_COUNTS = [7, 10, 13]
 ROBUSTNESS_BYZANTINE_RATIOS = [0.1, 0.2, 0.3]
+
+
+# Phase 7 写 CSV 之前调用一次，确保 extract_features 的 keys
+# 跟 FEATURE_COLUMNS + AUXILIARY_COLUMNS 完全对得上。
+def assert_feature_schema(feature_dict: dict) -> None:
+    expected = set(FEATURE_COLUMNS) | set(AUXILIARY_COLUMNS)
+    actual = set(feature_dict.keys())
+    missing = expected - actual
+    extra = actual - expected
+    assert not missing, f"Missing from feature_dict: {missing}"
+    assert not extra, f"Unknown keys in feature_dict: {extra}"
