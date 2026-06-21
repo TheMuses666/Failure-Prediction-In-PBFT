@@ -48,6 +48,9 @@ LABEL_NAMES = {
 NORMAL_LATENCY_THRESHOLD_MAX = 50
 DEGRADED_LATENCY_THRESHOLD_MAX = 150
 
+DROP_RATE_WARNING = 0.3
+MESSAGE_CONSISTENCY_WARNING = 0.8
+
 # =========================
 # Train Split
 # =========================

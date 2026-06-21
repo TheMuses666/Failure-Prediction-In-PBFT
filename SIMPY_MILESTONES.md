@@ -509,17 +509,17 @@ collection/feature_extractor.py
 
 ### Feature Definitions
 
-- [ ] `message_latency`: mean of `delivery_time - send_time`
-- [ ] `message_drop_rate`: `dropped_messages / expected_messages`
-- [ ] `propagation_pattern`: standard deviation of message arrival times
-- [ ] `consensus_agreement_time`: `round_end_time - round_start_time`
-- [ ] `phase_completion_time`: `commit_phase_end - prepare_phase_start`
-- [ ] `timeout_frequency`: number of timeout events in the round
-- [ ] `leader_change_frequency`: view-change count, initially 0 if view change is documented as out of scope
-- [ ] `response_time`: mean node first response time after receiving pre-prepare
-- [ ] `voting_consistency`: nodes with commit quorum divided by total nodes
-- [ ] `message_consistency`: majority content count divided by total consensus messages
-- [ ] `vote_deviation`: standard deviation of commit counts per node
+- [x] `message_latency`: mean of `delivery_time - send_time`
+- [x] `message_drop_rate`: `dropped_messages / expected_messages`
+- [x] `propagation_pattern`: standard deviation of message arrival times
+- [x] `consensus_agreement_time`: `round_end_time - round_start_time`
+- [x] `phase_completion_time`: `commit_phase_end - prepare_phase_start`
+- [x] `timeout_frequency`: number of timeout events in the round
+- [x] `leader_change_frequency`: view-change count, initially 0 if view change is documented as out of scope
+- [x] `response_time`: mean node first response time after receiving pre-prepare
+- [x] `voting_consistency`: nodes with commit quorum divided by total nodes
+- [x] `message_consistency`: majority content count divided by total consensus messages
+- [x] `vote_deviation`: standard deviation of commit counts per node
 
 ### Smoke Test
 
@@ -532,24 +532,24 @@ Print all 11 features for each fault type.
 
 These auxiliary fields are recorded for validation, ablation, and report interpretation. They MUST NOT be used as model input features unless the corresponding ablation experiment explicitly opts in (see Phase 11).
 
-- [ ] `forged`
-- [ ] `replayed`
-- [ ] `same_round_replayed`
-- [ ] `stale_replayed`
-- [ ] `equivocated`
-- [ ] `delayed`
-- [ ] `silent_mode`
-- [ ] `delay_probability`
-- [ ] `delay_distribution`
-- [ ] `strict_round_validation`
+- [x] `forged`
+- [x] `replayed`
+- [x] `same_round_replayed`
+- [x] `stale_replayed`
+- [x] `equivocated`
+- [x] `delayed`
+- [x] `silent_mode`
+- [x] `delay_probability`
+- [x] `delay_distribution`
+- [x] `strict_round_validation`
 
 Phase 4c modes must preserve all 11 core features and populate the relevant auxiliary counters.
 
 ### Pass Criteria
 
-- [ ] All 11 features are numeric.
-- [ ] No feature value is `None`.
-- [ ] Fault types produce different feature patterns.
+- [x] All 11 features are numeric.
+- [x] No feature value is `None`.
+- [x] Fault types produce different feature patterns.
 
 **Deliverable:** ML-ready feature rows derived from SimPy event logs.
 
@@ -573,29 +573,29 @@ collection/label_generator.py
 
 #### Failure — Label 2
 
-- [ ] timeout occurred
-- [ ] commit quorum not reached
-- [ ] too many honest nodes failed to commit
-- [ ] forgery or equivocation prevents valid quorum
+- [x] timeout occurred
+- [x] commit quorum not reached
+- [x] too many honest nodes failed to commit
+- [x] forgery or equivocation prevents valid quorum
 - [ ] stale replay affects current-round quorum when `STRICT_ROUND_VALIDATION` is `False` (ablation runs only)
 
 #### Degraded — Label 1
 
-- [ ] commit quorum reached but latency exceeds degraded threshold
-- [ ] message drop rate exceeds warning threshold
-- [ ] view change triggered
-- [ ] message consistency below warning threshold
-- [ ] `forged > 0` and commit still succeeds: safety is not violated, but suspicious sender activity is present
-- [ ] `same_round_replayed > 0` or `stale_replayed > 0`, while quorum remains valid
-- [ ] delay jitter causes a late but successful commit
-- [ ] `silent_mode` causes partial omission but quorum still reaches commit
+- [x] commit quorum reached but latency exceeds degraded threshold
+- [x] message drop rate exceeds warning threshold
+- [x] view change triggered
+- [x] message consistency below warning threshold
+- [x] `forged > 0` and commit still succeeds: safety is not violated, but suspicious sender activity is present
+- [x] `same_round_replayed > 0` or `stale_replayed > 0`, while quorum remains valid
+- [x] delay jitter causes a late but successful commit
+- [x] `silent_mode` causes partial omission but quorum still reaches commit
 
 #### Normal — Label 0
 
-- [ ] quorum reached
-- [ ] no timeout
-- [ ] latency below threshold
-- [ ] message consistency acceptable
+- [x] quorum reached
+- [x] no timeout
+- [x] latency below threshold
+- [x] message consistency acceptable
 
 ### Smoke Tests
 
@@ -610,8 +610,8 @@ strict validation blocks stale replay -> not failure solely because stale_replay
 
 ### Pass Criteria
 
-- [ ] Labels match intended consensus conditions.
-- [ ] Labels are generated from simulated state, not wall-clock runtime.
+- [x] Labels match intended consensus conditions.
+- [x] Labels are generated from simulated state, not wall-clock runtime.
 
 **Deliverable:** Reliable 3-class label generator.
 
