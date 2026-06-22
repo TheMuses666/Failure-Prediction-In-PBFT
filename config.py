@@ -11,6 +11,7 @@ DATA_PROCESSED_DIR = ROOT_DIR / 'data' / 'processed'
 RESULTS_FIGURES_DIR = ROOT_DIR / 'results' / 'figures'
 RESULTS_METRICS_DIR = ROOT_DIR / 'results' / 'metrics'
 RESULTS_MODELS_DIR = ROOT_DIR / 'results' / 'models'
+EXTENDED_DATA_FILE = DATA_RAW_DIR / "extended_robustness.csv"
 
 # =========================
 # Simulation Setting
