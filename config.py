@@ -89,21 +89,13 @@ FEATURE_COLUMNS = [
     "vote_deviation"
 ]
 
-AUXILIARY_COLUMNS = [
-    # Per-round event counters
-    "forged",
-    "replayed",
-    "same_round_replayed",
-    "stale_replayed",
-    "equivocated",
-    "delayed",
+AUXILIARY_COUNTERS = ["forged", "replayed", "same_round_replayed",
+                      "stale_replayed", "equivocated", "delayed",
+                      "delay_probability", "strict_round_validation"]
 
-    # FaultInjector configuration snapshot
-    "silent_mode",
-    "delay_probability",
-    "delay_distribution",
-    "strict_round_validation",
-]
+AUXILIARY_CONFIG = ["silent_mode", "delay_distribution"]
+
+AUXILIARY_COLUMNS = AUXILIARY_COUNTERS + AUXILIARY_CONFIG 
 
 TARGET_COLUMN = "label"
 
