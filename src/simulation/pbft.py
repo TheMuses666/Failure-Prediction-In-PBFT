@@ -6,9 +6,9 @@ Uses a simpy.Event to wait for either commit-quorum success or timeout.
 """
 
 import simpy
-from simulation.fault_injector import FaultInjector
-from simulation.simpy_network import SimPyNetwork
-from simulation.node import Node
+from src.simulation.fault_injector import FaultInjector
+from src.simulation.simpy_network import SimPyNetwork
+from src.simulation.node import Node
 from config import NUM_NODES, CONSENSUS_TIMEOUT_MS, RANDOM_SEED, STRICT_ROUND_VALIDATION
 
 def _wait_for_round(env, commit_event, timeout_ms, outcomes):

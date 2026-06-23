@@ -1,7 +1,7 @@
-from simulation.pbft import run_pbft_simulation
-from simulation.round_result import build_round_result
-from collection.feature_extractor import extract_features
-from collection.label_generator import generate_label
+from src.simulation.pbft import run_pbft_simulation
+from src.simulation.round_result import build_round_result
+from src.data.feature_extractor import extract_features
+from src.data.label_generator import generate_label
 from config import assert_feature_schema, FAULT_TYPES, RAW_DATA_FILE, DATA_RAW_DIR, EXTENDED_DATA_FILE
 import pandas as pd
 from collections import Counter

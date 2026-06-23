@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from config import RAW_DATA_FILE, FEATURE_COLUMNS
+from config import RAW_DATA_FILE, FEATURE_COLUMNS, RESULTS_TABLES_DIR
 
 df = pd.read_csv(RAW_DATA_FILE)
 
@@ -22,7 +22,7 @@ for col in FEATURE_COLUMNS:
     summary[f'{col}_mean'] = grouped[col].mean()
     summary[f'{col}_std']  = grouped[col].std()
 
-out_path = Path('results/metrics/simulation_summary.csv')
+out_path = Path(RESULTS_TABLES_DIR / 'simulation_summary.csv')
 out_path.parent.mkdir(parents=True, exist_ok=True)
 summary.to_csv(out_path)
 print(summary)

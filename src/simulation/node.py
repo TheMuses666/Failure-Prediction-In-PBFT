@@ -16,7 +16,7 @@ can pull a single round's data without filtering global logs.
 from collections import defaultdict
 from typing import Any, Callable
 
-from simulation.message import Message
+from src.simulation.message import Message
 from config import NUM_NODES
 
 

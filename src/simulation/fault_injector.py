@@ -15,7 +15,7 @@ so the injector doubles as the "null" baseline.
 import random, dataclasses, math
 from typing import Any
 
-from simulation.message import Message
+from src.simulation.message import Message
 from config import BYZANTINE_DELAY_MS, RANDOM_SEED, NUM_NODES
 
 

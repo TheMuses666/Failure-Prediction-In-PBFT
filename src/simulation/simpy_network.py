@@ -22,7 +22,7 @@ from collections import defaultdict
 
 import simpy
 
-from simulation.message import Message
+from src.simulation.message import Message
 from config import (
     BASE_MESSAGE_LATENCY_MS,
     LATENCY_JITTER_MS,
