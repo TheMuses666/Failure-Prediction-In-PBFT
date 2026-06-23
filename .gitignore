@@ -28,21 +28,21 @@ dist/
 data/raw/*
 data/processed/*
 results/figures/*
-results/metrics/*
+results/tables/*
 results/models/*
 
 # Keep output directories in git if placeholder files are added later
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !results/figures/.gitkeep
-!results/metrics/.gitkeep
+!results/tables/.gitkeep
 !results/models/.gitkeep
 
 # Model artifacts
 *.pkl
 *.joblib
 *.model
-*.json
+results/**/*.json 
 
 # Logs
 *.log
