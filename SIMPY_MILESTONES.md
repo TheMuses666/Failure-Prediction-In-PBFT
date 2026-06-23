@@ -716,6 +716,97 @@ data/raw/consensus_data.csv
 
 ---
 
+## Phase 7b — Project Structure Refactor and Pipeline Hygiene
+
+**Goal:** Reorganise the project into a cleaner `src/` + `scripts/` layout before Phase 8 validation and Phase 9 ML work.
+
+This phase is a structural refactor only. It should not change simulator semantics, feature definitions, label rules, or generated dataset values except for file paths and import paths.
+
+### Target Structure
+
+```text
+bft_project/
+├── config.py
+├── README.md
+├── requirements.txt
+├── MILESTONES.md
+├── SIMPY_MILESTONES.md
+│
+├── src/
+│   ├── __init__.py
+│   ├── simulation/
+│   ├── data/
+│   └── plotting/
+│
+├── scripts/
+│   ├── __init__.py
+│   ├── generate_main_dataset.py
+│   ├── validate_simulator.py
+│   ├── ablation.py
+│   ├── lead_time.py
+│   ├── robustness.py
+│   └── scalability.py
+│
+├── data/
+├── results/
+│   ├── tables/
+│   ├── figures/
+│   └── models/
+│
+├── notes/
+├── utils/
+├── baseline/
+└── ml/
+```
+
+### Move / Rename Plan
+
+- [ ] Create `src/`
+- [ ] Move `simulation/` to `src/simulation/`
+- [ ] Rename `collection/` to `src/data/`
+- [ ] Rename `visualization/` to `src/plotting/`
+- [ ] Create `scripts/`
+- [ ] Move `main.py` to `scripts/generate_main_dataset.py`
+- [ ] Move experiment scripts from `experiments/` to `scripts/`
+- [ ] Rename `experiments/simulator_validation.py` to `scripts/validate_simulator.py` if present
+- [ ] Rename `experiments/ablation_test.py` to `scripts/ablation.py`
+- [ ] Rename `experiments/lead_time_test.py` to `scripts/lead_time.py`
+- [ ] Rename `experiments/robustness_test.py` to `scripts/robustness.py`
+- [ ] Rename `experiments/scalability_test.py` to `scripts/scalability.py`
+- [ ] Rename `results/metrics/` to `results/tables/`
+- [ ] Keep `notes/`, `utils/`, `baseline/`, and `ml/` in place
+
+### Import and Path Updates
+
+- [ ] Update imports from `simulation.*` to `src.simulation.*`
+- [ ] Update imports from `collection.*` to `src.data.*`
+- [ ] Update plotting imports to `src.plotting.*`
+- [ ] Update dataset generation entry point to `scripts/generate_main_dataset.py`
+- [ ] Update validation entry point to `scripts/validate_simulator.py`
+- [ ] Update result table paths from `results/metrics/` to `results/tables/`
+- [ ] Keep raw and processed datasets under top-level `data/`
+- [ ] Keep trained models under `results/models/`
+
+### Smoke Tests
+
+```bash
+.venv/bin/python -m scripts.generate_main_dataset
+.venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['label'].value_counts())"
+.venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/extended_robustness.csv'); print(df.shape); print(df['fault_subtype'].value_counts())"
+```
+
+### Pass Criteria
+
+- [ ] Main dataset generation still works after import-path changes
+- [ ] Extended robustness dataset generation still works after import-path changes
+- [ ] Existing Phase 5 feature extraction still passes schema validation
+- [ ] Existing Phase 6 label generation still produces labels `0`, `1`, and `2`
+- [ ] No generated data files are accidentally deleted during the refactor
+
+**Deliverable:** A cleaner project layout that is ready for Phase 8 validation and Phase 9 ML pipeline work.
+
+---
+
 ## Phase 8 — Simulator Validation Before ML
 
 **Goal:** Verify the simulator before training models.
