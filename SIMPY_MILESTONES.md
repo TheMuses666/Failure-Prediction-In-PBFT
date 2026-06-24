@@ -817,36 +817,38 @@ bft_project/
 
 ### Checks
 
-- [ ] normal latency distribution
-- [ ] delay latency distribution
-- [ ] silent message drop rate
-- [ ] equivocation message consistency
-- [ ] replay duplicate/replay count
-- [ ] forgery `forged` count and quorum timing
-- [ ] same-round replay versus stale replay counts
-- [ ] strict round validation blocks stale replay by default
-- [ ] delay jitter increases latency variance
-- [ ] `silent_mode` changes message drop pattern by phase
-- [ ] label balance
-- [ ] feature correlation
-- [ ] Phase 4c variance comparison across >=50 seeded runs
+- [x] normal latency distribution
+- [x] delay latency distribution
+- [x] silent message drop rate
+- [x] equivocation message consistency
+- [x] replay duplicate/replay count
+- [x] forgery `forged` count and quorum timing
+- [x] same-round replay versus stale replay counts
+- [x] strict round validation blocks stale replay by default
+- [x] delay jitter increases latency variance
+- [x] `silent_mode` changes message drop pattern by phase
+- [x] label balance
+- [x] feature correlation
+- [x] Phase 4c variance comparison across >=50 seeded runs
 
 ### Outputs
 
 ```text
 results/figures/feature_distribution_by_fault.png
+results/figures/feature_distribution_by_subtype.png
 results/figures/phase4c_variance_comparison.png
-results/metrics/simulation_summary.csv
-results/metrics/advanced_fault_summary.csv
+results/tables/simulation_summary.csv
+results/tables/advanced_fault_summary.csv
+results/tables/feature_correlation.csv
 ```
 
 Note: `phase4c_variance_comparison.png` is the operational proof for Phase 4c pass criterion PC2 ("richer feature distributions"). This figure must be generated before declaring Phase 4c complete.
 
 ### Pass Criteria
 
-- [ ] Fault behaviours are visibly separable.
-- [ ] Fault behaviours are not trivially perfect.
-- [ ] Feature values are explainable in the report.
+- [x] Fault behaviours are visibly separable.
+- [x] Fault behaviours are not trivially perfect.
+- [x] Feature values are explainable in the report.
 
 **Deliverable:** Validated simulator summary and feature distribution plots.
 
