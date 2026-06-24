@@ -32,7 +32,7 @@ def build_summary(csv_file, group_col, out_path, is_aux = False):
     return summary
 
 # Normal dataset
-sum_main = build_summary(RAW_DATA_FILE,'fault_type','simulation_summary.csv')
+sum_main = build_summary(RAW_DATA_FILE,'fault_type','simulation_summary.csv',True)
 
 # Extend dataset
 sum_ext = build_summary(EXTENDED_DATA_FILE,'fault_subtype','advanced_fault_summary.csv',True)
