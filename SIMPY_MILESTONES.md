@@ -864,6 +864,7 @@ ml/models/decision_tree.py
 ml/models/random_forest.py
 ml/models/xgboost_model.py
 ml/evaluation.py
+scripts/train_model.py
 ```
 
 **Goal:** Train and evaluate ML models.
@@ -874,40 +875,60 @@ ml/evaluation.py
 
 ### Tasks
 
-- [ ] feature normalisation
-- [ ] train / validation / test split: 70 / 10 / 20
-- [ ] train main ML models on the main dataset by default
-- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default
-- [ ] include advanced modes in training only when an explicit Phase 11 robustness experiment opts in, e.g. `train_on_extended=True`
-- [ ] Decision Tree
-- [ ] Random Forest
-- [ ] XGBoost
-- [ ] validation-set evaluation
-- [ ] test-set evaluation
+- [x] feature normalisation (Min-Max, fit on train only)
+- [x] train / validation / test split: 70 / 10 / 20 (stratified, `random_state=42`)
+- [x] train main ML models on the main dataset by default
+- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default — **deferred to Phase 11.B** (trained models + scaler are persisted so Phase 11.B can load them without retraining)
+- [ ] include advanced modes in training only when an explicit Phase 11 robustness experiment opts in, e.g. `train_on_extended=True` — **deferred to Phase 11.B**
+- [x] Decision Tree
+- [x] Random Forest
+- [x] XGBoost
+- [x] validation-set evaluation
+- [x] test-set evaluation
+- [x] persist trained models and fitted scaler to `results/models/*.joblib` for downstream Phase 11 reuse
 
 ### Metrics
 
-- [ ] accuracy
-- [ ] precision
-- [ ] recall
-- [ ] F1-score
-- [ ] confusion matrix
-- [ ] response time
-- [ ] prediction lead time
+- [x] accuracy
+- [x] precision (macro-averaged)
+- [x] recall (macro-averaged)
+- [x] F1-score (macro-averaged)
+- [x] confusion matrix
+- [x] response time (per-sample inference latency, batch-averaged)
+- [ ] prediction lead time — **deferred to Phase 11.A**
 
 ### Output
 
 ```text
-results/metrics/model_metrics.csv
+results/tables/model_metrics.csv          (3 models × 2 splits = 6 rows, with `split` column)
+results/models/decision_tree.joblib
+results/models/random_forest.joblib
+results/models/xgboost.joblib
+results/models/scaler.joblib
+```
+
+### Entry point
+
+```bash
+.venv/bin/python -m scripts.train_model
 ```
 
 ### Pass Criteria
 
-- [ ] all models train successfully
-- [ ] metrics saved
-- [ ] results are reproducible with `RANDOM_SEED = 42`
+- [x] all models train successfully
+- [x] metrics saved
+- [x] results are reproducible with `RANDOM_SEED = 42`
 
-**Deliverable:** Trained ML models and evaluation metrics.
+### Design notes
+
+Non-obvious decisions made during Phase 9 implementation are recorded in
+`notes/phase9_design_decisions.md`. This includes the rationale for:
+keeping the zero-variance `leader_change_frequency` feature, the choice of
+`macro` averaging, fitting the scaler on train only, default
+hyperparameters (Phase 11 ablation baseline), the batch-average response
+time approximation, and explicit deferral of lead-time / OOD work to Phase 11.
+
+**Deliverable:** Trained ML models, fitted scaler, and main-dataset evaluation metrics.
 
 ---
 
