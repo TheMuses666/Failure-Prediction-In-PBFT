@@ -8,7 +8,7 @@ from config import METRICS_FILE, RESULTS_FIGURES_DIR, RAW_DATA_FILE, RESULTS_MOD
 import joblib
 
 def main():
-    X_train, X_val, X_test, y_train, y_val, y_test, scaler = load_and_split(RAW_DATA_FILE)
+    X_train, X_val, X_test,_,_, y_train, y_val, y_test, scaler = load_and_split(RAW_DATA_FILE)
 
     result = []
     for model_name, train_fc in [

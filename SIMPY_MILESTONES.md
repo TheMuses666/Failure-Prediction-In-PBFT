@@ -130,7 +130,7 @@ simulation/simpy_network.py
 ### Smoke Test
 
 ```bash
-.venv/bin/python -c "import simpy; from simulation.message import Message; from simulation.simpy_network import SimPyNetwork; env=simpy.Environment(); net=SimPyNetwork(env); print(env.now)"
+.venv/bin/python -c "import simpy; from src.simulation.message import Message; from src.simulation.simpy_network import SimPyNetwork; env=simpy.Environment(); net=SimPyNetwork(env); print(env.now)"
 ```
 
 ### Pass Criteria
@@ -182,7 +182,7 @@ simulation/node.py
 ### Smoke Test
 
 ```bash
-.venv/bin/python -c "from simulation.node import Node; n=Node(0); print(n.node_id)"
+.venv/bin/python -c "from src.simulation.node import Node; print(Node.__name__)"
 ```
 
 ### Pass Criteria
@@ -221,7 +221,7 @@ simulation/pbft.py
 ### Normal Round Smoke Test
 
 ```bash
-.venv/bin/python -c "from simulation.pbft import run_pbft_round; print(run_pbft_round(round_id=1, fault_type='normal'))"
+.venv/bin/python -c "from src.simulation.pbft import run_pbft_round; print(run_pbft_round(round_id=1, fault_type='normal'))"
 ```
 
 ### Pass Criteria
@@ -700,7 +700,7 @@ data/raw/consensus_data.csv
 ### Verification
 
 ```bash
-.venv/bin/python main.py
+.venv/bin/python -m scripts.generate_main_dataset
 .venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['fault_type'].value_counts()); print(df['label'].value_counts())"
 ```
 
@@ -948,19 +948,19 @@ baseline/static_detection.py
 
 ### Baselines
 
-- [ ] threshold-based detection
-- [ ] rule-based detection
+- [x] threshold-based detection
+- [x] rule-based detection
 
 ### Requirements
 
-- [ ] same test set as ML models
-- [ ] same evaluation metrics
-- [ ] comparison table
+- [x] same test set as ML models
+- [x] same evaluation metrics
+- [x] comparison table
 
 ### Pass Criteria
 
-- [ ] ML and baseline results are directly comparable.
-- [ ] baseline assumptions are documented.
+- [x] ML and baseline results are directly comparable.
+- [x] baseline assumptions are documented.
 
 **Deliverable:** Static baseline comparison.
 

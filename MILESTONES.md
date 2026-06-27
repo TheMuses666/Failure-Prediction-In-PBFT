@@ -51,7 +51,7 @@ Week 6 (Jul 21–24)    → Final Polish + Submit
 Test:
 
 ```bash
-python3 -c "from simulation.node import Node; n=Node(1); n.receive_message({'type':'prepare','sender_id':2,'round_id':1,'content':'x'}); n.receive_message({'type':'prepare','sender_id':3,'round_id':1,'content':'x'}); print(n.prepare_log)"
+.venv/bin/python -c "import simpy; from src.simulation.simpy_network import SimPyNetwork; from src.simulation.node import Node; env=simpy.Environment(); net=SimPyNetwork(env); n=Node(1, net); print(n.node_id)"
 ```
 
 Expected:
@@ -69,7 +69,7 @@ Expected:
 Test:
 
 ```bash
-python3 -c "from simulation.fault_injector import FaultInjector; nodes=FaultInjector().create_nodes('silent'); print(len(nodes)); print(sum(n.is_Byzantine for n in nodes)); print([type(n).__name__ for n in nodes])"
+.venv/bin/python -c "from src.simulation.fault_injector import FaultInjector; fi=FaultInjector(fault_type='silent', byzantine_node_ids={4,5}); print(fi.fault_type); print(sorted(fi.byzantine_ids))"
 ```
 
 Expected:
@@ -90,7 +90,7 @@ Expected:
 Test:
 
 ```bash
-python3 -c "from simulation.fault_injector import FaultInjector; from simulation.network import Network; nodes=FaultInjector().create_nodes('silent'); print(Network(nodes).run_round(1))"
+.venv/bin/python -c "from src.simulation.pbft import run_pbft_round; print(run_pbft_round(1, fault_type='silent', byzantine_node_ids=[4,5]))"
 ```
 
 Expected:
@@ -116,7 +116,7 @@ Normal   = otherwise
 Test:
 
 ```bash
-python3 -c "from collection.label_generator import generate_label; print(generate_label({'timeout': False, 'success': True, 'duration_ms': 20})); print(generate_label({'timeout': False, 'success': True, 'duration_ms': 80})); print(generate_label({'timeout': True, 'success': False, 'duration_ms': 200}))"
+.venv/bin/python -c "from src.simulation.pbft import run_pbft_round; from src.simulation.round_result import build_round_result; from src.data.feature_extractor import extract_features; from src.data.label_generator import generate_label; rr=build_round_result(run_pbft_round(1, fault_type='normal')); features=extract_features(rr); print(generate_label(rr, features))"
 ```
 
 Expected:
@@ -137,7 +137,7 @@ Expected:
 Test:
 
 ```bash
-python3 -c "from collection.feature_extractor import extract_features; print(extract_features({'duration_ms': 20, 'timeout': False, 'success': True, 'success_count': 5}))"
+.venv/bin/python -c "from src.simulation.pbft import run_pbft_round; from src.simulation.round_result import build_round_result; from src.data.feature_extractor import extract_features; print(extract_features(build_round_result(run_pbft_round(1, fault_type='normal'))))"
 ```
 
 Expected:
@@ -155,7 +155,7 @@ A dictionary containing all 11 feature columns with no None values.
 Test:
 
 ```bash
-python3 -c "from simulation.fault_injector import FaultInjector; from simulation.network import Network; nodes=FaultInjector().create_nodes('delay'); row=Network(nodes).run_round(1); print(row); print(row['label'])"
+.venv/bin/python -c "from src.simulation.pbft import run_pbft_round; from src.simulation.round_result import build_round_result; from src.data.feature_extractor import extract_features; from src.data.label_generator import generate_label; rr=build_round_result(run_pbft_round(1, fault_type='delay', byzantine_node_ids=[4,5])); features=extract_features(rr); print(features); print(generate_label(rr, features))"
 ```
 
 Expected:
@@ -174,7 +174,7 @@ No error, no feature value is None, and label exists.
 Test:
 
 ```bash
-python3 main.py
+.venv/bin/python -m scripts.generate_main_dataset
 ```
 
 Expected:
@@ -192,8 +192,8 @@ label distribution: ...
 Test:
 
 ```bash
-python3 main.py
-python3 -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df.head()); print(df['label'].value_counts())"
+.venv/bin/python -m scripts.generate_main_dataset
+.venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df.head()); print(df['label'].value_counts())"
 ```
 
 Expected:
@@ -211,8 +211,8 @@ CSV exists, contains 11 feature columns plus label, and labels are not all one c
 Test:
 
 ```bash
-python3 main.py
-python3 -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['fault_type'].value_counts()); print(df['label'].value_counts())"
+.venv/bin/python -m scripts.generate_main_dataset
+.venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['fault_type'].value_counts()); print(df['label'].value_counts())"
 ```
 
 Expected:
