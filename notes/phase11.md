@@ -46,3 +46,16 @@ passed through `GridSearchCV.fit(...)`. Test-set evaluation uses
 unweighted metrics to reflect true class distribution. The effect
 on macro-F1 was marginal (Δ < 0.005), consistent with the moderate
 2:1 class imbalance in this dataset.
+
+## CV results scope
+
+`cv_results.csv` records the full GridSearchCV trace for the
+representative seed (RANDOM_SEED=42), serving as process
+documentation. Multi-seed reporting is captured at the higher
+levels of abstraction: `model_metrics_tuned.csv` (test performance
+mean ± std), `best_hyperparameters.csv` (parameter selection
+stability across seeds), and `per_class_report.csv` (per-class
+metric stability). Expanding `cv_results.csv` to 5 seeds (≈690 rows)
+would provide finer granularity but no additional research-question
+insight, as CV scores across different data splits are not directly
+comparable.
