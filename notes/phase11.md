@@ -2,7 +2,7 @@
 
 After tuning over a search space of 108 parameter combinations
 (n_estimators × max_depth × min_samples_leaf × min_samples_split
-× max_features), the tuned RF achieved mean macro-F1 = 0.9151 ± 0.0110
+× max_features), the tuned RF achieved mean macro-F1 = 0.9149 ± 0.0139
 across 5 seeds, which is marginally below the Phase 9 single-seed
 default result (0.9252).
 
@@ -21,11 +21,11 @@ Three observations:
 
 ## Per-class report scope
 
-`per_class_report.csv` records the representative seed (RANDOM_SEED=42).
-Overall multi-seed stability is captured by `model_metrics_tuned.csv`
-(mean ± std across 5 seeds). Per-class metrics primarily serve
-qualitative analysis ("which class is hardest") rather than
-quantitative stability, which justifies single-seed reporting.
+`per_class_report.csv` now records per-class precision / recall / F1
+for all 5 Phase 11 seeds. Overall multi-seed stability is summarized
+by `model_metrics_tuned.csv` (mean ± std across 5 seeds), while
+`per_class_report.csv` keeps the class-level detail needed to inspect
+which labels are hardest to detect under each model and seed.
 
 ## Scaler leakage in CV
 

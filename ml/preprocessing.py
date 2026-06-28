@@ -32,3 +32,13 @@ def load_and_split_trainval(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
     X_test = scaler.transform(X_test_raw)
 
     return X_trainval, X_test, y_trainval, y_test, scaler
+
+# Multi-seed for baseline raw data
+def load_and_split_trainval_raw(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+    df = pd.read_csv(csv_path)
+    X = df[FEATURE_COLUMNS]
+    y = df[TARGET_COLUMN]
+    X_trainval_raw, X_test_raw, y_trainval, y_test = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=seed
+    )
+    return X_trainval_raw, X_test_raw, y_trainval, y_test
