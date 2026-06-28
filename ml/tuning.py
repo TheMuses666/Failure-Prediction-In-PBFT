@@ -2,7 +2,7 @@ from config import RANDOM_SEED
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 
 
-def tune_model(estimator, param_grid, X_trainval, y_trainval, seed=RANDOM_SEED, sample_weight = None):
+def tune_model(estimator, param_grid, X_trainval, y_trainval, seed=RANDOM_SEED, sample_weight = None, sample_weight_param = 'sample_weight'):
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     grid = GridSearchCV(
             estimator=estimator,
@@ -14,7 +14,7 @@ def tune_model(estimator, param_grid, X_trainval, y_trainval, seed=RANDOM_SEED, 
         ) 
     fit_params = {}
     if sample_weight is not None:
-        fit_params['sample_weight'] = sample_weight
+        fit_params[sample_weight_param] = sample_weight
     
     grid.fit(X_trainval, y_trainval, **fit_params)
     return grid.best_estimator_, grid.best_params_, grid.cv_results_

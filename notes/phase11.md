@@ -29,13 +29,28 @@ which labels are hardest to detect under each model and seed.
 
 ## Scaler leakage in CV
 
-The MinMaxScaler is fit on the full `trainval` before GridSearchCV,
-meaning CV validation folds technically see the scaler statistics.
-Because all three Phase 11 models (DT, RF, XGBoost) are tree-based
-and invariant under monotonic feature transformations, this
-introduces no measurable leakage. Phase 11b (Logistic Regression)
-will adopt sklearn `Pipeline` to fold scaling into CV correctly,
-where the distinction matters.
+Phase 11 initially fit MinMaxScaler on the full `trainval` before
+GridSearchCV, meaning CV validation folds technically saw the scaler
+statistics. For tree-based models (DT, RF, XGBoost) this introduces
+no measurable leakage because they are invariant under monotonic
+feature transformations.
+
+Phase 11b adopts `sklearn.pipeline.Pipeline` to fold scaling into
+CV correctly. Every candidate is wrapped as
+`Pipeline([('scaler', MinMaxScaler()), ('clf', estimator)])` so that
+each fold's scaler fits only on its train portion. After refit on
+the full `trainval`, the Pipeline is persisted as the canonical
+artifact (`results/models/*_tuned.joblib`); a standalone
+`scaler_tuned.joblib` is no longer produced, removing the risk of
+downstream code double-scaling raw inputs.
+
+The numerical impact on Logistic Regression was zero across all
+five seeds: `GridSearchCV` selected `C=10.0` (the boundary of the
+search space) both before and after the fix, and the final refit
+on the full `trainval` produces an identical model in either case.
+The change is therefore methodological — eliminating the leakage
+contract rather than the leakage value — and the qualitative
+ranking (LR < DT < RF < XGB) is unchanged.
 
 ## Class weighting
 
