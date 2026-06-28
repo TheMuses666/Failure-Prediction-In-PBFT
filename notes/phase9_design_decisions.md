@@ -30,7 +30,7 @@ currently carries zero variance.
   pipeline with no schema migration required.
 
 **How to apply:** Do not drop zero-variance columns automatically in
-`preprocessing.py`. If a future Phase 11 ablation experiment wants to compare
+`preprocessing.py`. If a future Phase 12 ablation experiment wants to compare
 "with vs without zero-variance features" the experiment script should drop
 the column locally rather than changing the global preprocessing contract.
 
@@ -96,7 +96,7 @@ behavior — defeating the research question.
 This matches Phase 5's explicit rule:
 > "These auxiliary fields are recorded for validation, ablation, and report
 > interpretation. They MUST NOT be used as model input features unless the
-> corresponding ablation experiment explicitly opts in (see Phase 11)."
+> corresponding ablation experiment explicitly opts in (see Phase 12)."
 
 ---
 
@@ -106,10 +106,11 @@ This matches Phase 5's explicit rule:
 `random_state=RANDOM_SEED` — no `max_depth`, `n_estimators`, `learning_rate`,
 etc. are overridden.
 
-**Why:** Phase 11 includes an ablation experiment that explicitly compares
-tuned vs untuned configurations. If Phase 9 already tuned hyperparameters,
-there would be no untuned baseline to compare against in Phase 11, and the
-ablation story collapses.
+**Why:** Default hyperparameters are retained in Phase 9 so Phase 11 can
+compare default vs tuned models. Phase 11 introduces cross-validation and
+hyperparameter tuning as a dedicated rigorous-training phase; if Phase 9
+had already tuned, there would be no untuned baseline to compare against,
+and the "default vs tuned" ablation in Phase 12 would collapse.
 
 **Observed consequence:** all three models report
 `train_accuracy ≈ 1.0`, which is normal for unbounded trees on a dataset of
@@ -162,18 +163,42 @@ name but are unrelated quantities.
 
 ---
 
-## 8. Out of scope for Phase 9 — deferred to Phase 11
+## 8. Out of scope for Phase 9 — deferred to Phase 11 and Phase 12
 
 The following items appear in the Phase 9 milestone but are intentionally
-left for Phase 11, because Phase 11 is where the corresponding experiments
-are designed end-to-end:
+left for later phases, because those phases are where the corresponding
+experiments are designed end-to-end:
 
-- **Prediction Lead Time** — Phase 11.A.
+- **Hyperparameter tuning / cross-validation / multi-seed training** —
+  Phase 11. Phase 9 deliberately uses default hyperparameters so Phase 11
+  can establish a tuned baseline and Phase 12 can run a "default vs tuned"
+  ablation.
+- **Prediction Lead Time** — Phase 12.A.
 - **OOD robustness on `extended_robustness.csv`** (Phase 4b/4c modes) —
-  Phase 11.B. The trained models and scaler are saved to
-  `results/models/` so Phase 11.B can load them without retraining.
-- **Hyperparameter ablation** — Phase 11.A.
-- **SHAP feature importance** — Phase 11.A.
+  Phase 12.B. The trained models and scaler are saved to
+  `results/models/` so Phase 12.B can load them without retraining.
+- **Feature ablation** — Phase 12.A.
+- **SHAP feature importance** — Phase 12.A.
 
-Phase 9's deliverable is the trained models + main-dataset metrics; the
-research-quality experiments that consume those artifacts live in Phase 11.
+Phase 9's deliverable is the default-hyperparameter trained models +
+main-dataset metrics; rigorous training lives in Phase 11; the
+research-quality experiments that consume those artifacts live in Phase 12.
+
+---
+
+## 9. Bi-LSTM deferred until a multi-round trace dataset exists
+
+The current dataset is one row per PBFT round — independent samples,
+no temporal ordering. Bi-LSTM assumes a sequence
+(`round_{t-k}, ..., round_{t}`), so applying it to per-round rows
+would just be "deep learning for the sake of deep learning" with no
+sequential signal to model.
+
+Bi-LSTM is therefore deferred to a future extension that generates a
+multi-round trace dataset (e.g., 50 consecutive rounds per scenario,
+with fault state evolving across rounds). Until that dataset exists,
+LSTM-family models are out of scope and the model lineup remains:
+
+- Phase 10: static rules (threshold, rule-based)
+- Phase 11b: linear ML (Logistic Regression)
+- Phase 11: tree-family ML (Decision Tree, Random Forest, XGBoost)

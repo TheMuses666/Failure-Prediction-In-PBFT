@@ -30,6 +30,7 @@ NORMAL_ROUNDS = 400
 TOTAL_SIMULATION_ROUNDS = ROUNDS_PER_FAULT * len(FAULT_TYPES) + NORMAL_ROUNDS
 
 RANDOM_SEED = 42
+RANDOM_SEEDS = [42, 31,8,66,2]
 
 STRICT_ROUND_VALIDATION = True
 
@@ -127,6 +128,29 @@ METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 SCALABILITY_NODE_COUNTS = [7, 10, 13]
 ROBUSTNESS_BYZANTINE_RATIOS = [0.1, 0.2, 0.3]
 
+# =========================
+# ML Hyperparameter Search Space (Phase 11)
+# =========================
+
+PARAM_GRIDS = {
+    'decision_tree': {
+        'max_depth': [None, 5, 10, 20],
+        'min_samples_leaf': [1, 2, 5],
+    },
+    'random_forest': {
+        'n_estimators': [100, 300],
+        'max_depth': [None, 10, 20],
+        'min_samples_leaf': [1, 2],
+        'min_samples_split':[2,5,10],
+        'max_features': ['sqrt','log2',None]
+    },
+    'xgboost': {
+        'n_estimators': [100, 300],
+        'max_depth': [3, 6, 10],
+        'learning_rate': [0.05, 0.1, 0.2],
+    },
+}
+
 
 # Phase 7 写 CSV 之前调用一次，确保 extract_features 的 keys
 # 跟 FEATURE_COLUMNS + AUXILIARY_COLUMNS 完全对得上。
@@ -137,3 +161,5 @@ def assert_feature_schema(feature_dict: dict) -> None:
     extra = actual - expected
     assert not missing, f"Missing from feature_dict: {missing}"
     assert not extra, f"Unknown keys in feature_dict: {extra}"
+
+

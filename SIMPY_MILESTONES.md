@@ -24,7 +24,9 @@ Phase 7  -> Full dataset generation
 Phase 8  -> Simulator validation before ML
 Phase 9  -> ML pipeline
 Phase 10 -> Baseline comparison
-Phase 11 -> Research-quality experiments
+Phase 11 -> Rigorous training (CV + tuning + multi-seed)
+Phase 11b -> Lightweight model baseline (Logistic Regression)
+Phase 12 -> Research-quality experiments
 ```
 
 ---
@@ -530,7 +532,7 @@ Print all 11 features for each fault type.
 
 ### Auxiliary Metadata and Counters
 
-These auxiliary fields are recorded for validation, ablation, and report interpretation. They MUST NOT be used as model input features unless the corresponding ablation experiment explicitly opts in (see Phase 11).
+These auxiliary fields are recorded for validation, ablation, and report interpretation. They MUST NOT be used as model input features unless the corresponding ablation experiment explicitly opts in (see Phase 12).
 
 - [x] `forged`
 - [x] `replayed`
@@ -666,7 +668,7 @@ Extended robustness dataset:
 Forgery sensitivity runs:
 
 - [ ] `fault_intensity in {0.2, 0.5, 1.0}`
-- [ ] used for Phase 11 authentication-ablation analysis
+- [ ] used for Phase 12 authentication-ablation analysis
 
 Config split:
 
@@ -878,14 +880,14 @@ scripts/train_model.py
 - [x] feature normalisation (Min-Max, fit on train only)
 - [x] train / validation / test split: 70 / 10 / 20 (stratified, `random_state=42`)
 - [x] train main ML models on the main dataset by default
-- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default — **deferred to Phase 11.B** (trained models + scaler are persisted so Phase 11.B can load them without retraining)
-- [ ] include advanced modes in training only when an explicit Phase 11 robustness experiment opts in, e.g. `train_on_extended=True` — **deferred to Phase 11.B**
+- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default — **deferred to Phase 12.B** (trained models + scaler are persisted so Phase 12.B can load them without retraining)
+- [ ] include advanced modes in training only when an explicit Phase 12 robustness experiment opts in, e.g. `train_on_extended=True` — **deferred to Phase 12.B**
 - [x] Decision Tree
 - [x] Random Forest
 - [x] XGBoost
 - [x] validation-set evaluation
 - [x] test-set evaluation
-- [x] persist trained models and fitted scaler to `results/models/*.joblib` for downstream Phase 11 reuse
+- [x] persist trained models and fitted scaler to `results/models/*.joblib` for downstream Phase 11/12 reuse
 
 ### Metrics
 
@@ -895,7 +897,7 @@ scripts/train_model.py
 - [x] F1-score (macro-averaged)
 - [x] confusion matrix
 - [x] response time (per-sample inference latency, batch-averaged)
-- [ ] prediction lead time — **deferred to Phase 11.A**
+- [ ] prediction lead time — **deferred to Phase 12.A**
 
 ### Output
 
@@ -925,8 +927,8 @@ Non-obvious decisions made during Phase 9 implementation are recorded in
 `notes/phase9_design_decisions.md`. This includes the rationale for:
 keeping the zero-variance `leader_change_frequency` feature, the choice of
 `macro` averaging, fitting the scaler on train only, default
-hyperparameters (Phase 11 ablation baseline), the batch-average response
-time approximation, and explicit deferral of lead-time / OOD work to Phase 11.
+hyperparameters (Phase 12 ablation baseline), the batch-average response
+time approximation, and explicit deferral of lead-time / OOD work to Phase 12.
 
 **Deliverable:** Trained ML models, fitted scaler, and main-dataset evaluation metrics.
 
@@ -966,7 +968,287 @@ baseline/static_detection.py
 
 ---
 
-## Phase 11 — Research-Quality Experiments
+## Phase 11 — Rigorous Training (CV + Hyperparameter Tuning)
+
+**Goal:** Replace Phase 9's default-hyperparameter baseline with a
+cross-validated, hyperparameter-tuned, multi-seed training pipeline.
+All Phase 12 experiments build on the tuned models produced here.
+
+**Files:**
+
+```text
+ml/preprocessing.py            (extend to expose trainval split)
+ml/tuning.py                   (new: GridSearch / CV utilities)
+scripts/train_model_tuned.py   (new: rigorous training entry point)
+```
+
+**Primary reference:** scikit-learn `StratifiedKFold`, `GridSearchCV`,
+`cross_validate`.
+
+**Secondary reference:** This project's A2 methodology; ai-bft-consensus
+for ML + consensus reporting style.
+
+### Motivation
+
+Phase 9 trained each model once with default hyperparameters and reported
+a single F1 per (model, split). This is acceptable as a baseline but is
+not research-quality, because:
+
+- single-split F1 has high variance and can be misleading
+- default hyperparameters under-estimate the true capability of each model
+- without per-class metrics or multi-seed reporting, OOD/ablation results
+  in Phase 12 cannot be interpreted reliably
+
+Phase 11 closes these gaps before any Phase 12 experiment runs.
+
+### Tasks
+
+- [ ] inspect `label` distribution and document class balance
+- [ ] add `class_weight='balanced'` (or equivalent) where appropriate
+- [ ] merge train + val into a single `trainval` set (80% of data) for CV;
+      keep the existing 20% test set untouched
+- [ ] implement `StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_SEED)`
+- [ ] run `GridSearchCV` per model on `trainval` with macro-F1 as the
+      selection metric
+- [ ] refit each model on the full `trainval` with the best hyperparameters
+- [ ] repeat training under multiple seeds (e.g. [42, 0, 1, 2, 3]) and
+      report mean ± std of test metrics
+- [ ] add `classification_report` (per-class precision/recall/F1) to the
+      evaluation output
+- [ ] persist tuned models and the fitted scaler to
+      `results/models/*_tuned.joblib`
+- [ ] keep Phase 9's default-hyperparameter models in place (do not delete
+      `decision_tree.joblib` etc.) so Phase 12 can report "default vs tuned"
+      as one of its ablations
+
+### Search Space (initial)
+
+```text
+Decision Tree
+  max_depth        in {None, 5, 10, 20}
+  min_samples_leaf in {1, 2, 5}
+
+Random Forest
+  n_estimators     in {100, 300}
+  max_depth        in {None, 10, 20}
+  min_samples_leaf in {1, 2}
+
+XGBoost
+  n_estimators     in {100, 300}
+  max_depth        in {3, 6, 10}
+  learning_rate    in {0.05, 0.1, 0.2}
+```
+
+The search space may be expanded once initial CV runs confirm the
+infrastructure works end-to-end.
+
+### Output
+
+```text
+results/tables/cv_results.csv           (per-model, per-fold, per-metric)
+results/tables/best_hyperparameters.csv (per-model best config)
+results/tables/model_metrics_tuned.csv  (final test metrics, mean ± std over seeds)
+results/tables/per_class_report.csv     (classification_report per model)
+results/models/decision_tree_tuned.joblib
+results/models/random_forest_tuned.joblib
+results/models/xgboost_tuned.joblib
+results/models/scaler_tuned.joblib
+```
+
+### Entry Point
+
+```bash
+.venv/bin/python -m scripts.train_model_tuned
+```
+
+### Pass Criteria
+
+- [ ] 5-fold CV completes for all three models
+- [ ] reported test F1 (mean ± std over >=5 seeds) is documented
+- [ ] best hyperparameters are saved and reproducible from
+      `cv_results.csv`
+- [ ] tuned model test F1 >= default model test F1 for every model
+      (otherwise document why and revisit the search space)
+- [ ] per-class metrics are saved for every (model, split)
+- [ ] Phase 9 default models remain on disk for the Phase 12.B
+      "default vs tuned" ablation
+
+### Design Notes
+
+- Test set (20%) is **never** seen by CV or GridSearchCV. It is touched
+  exactly once at the end, per seed.
+- Class weighting is applied uniformly across models; if a model does not
+  support `class_weight`, use `sample_weight` at fit time.
+- Multi-seed averaging applies only to the **final refit + test
+  evaluation** step. CV uses a fixed `random_state=RANDOM_SEED` for
+  reproducibility of the search itself.
+- Lead time, OOD robustness, and feature ablation remain deferred to
+  Phase 12 and explicitly consume `*_tuned.joblib`.
+
+**Deliverable:** Tuned ML models, fitted scaler, CV results, and a
+per-class evaluation table that all Phase 12 experiments build on.
+
+---
+
+## Phase 11b — Lightweight Model Baseline
+
+**Goal:** Add a linear ML model (Logistic Regression) alongside the
+tree-family models from Phase 11. This provides a third tier in the
+overall comparison — static rules (Phase 10) → linear ML (Phase 11b) →
+tree-family ML (Phase 11) — and lets the report quantify how much of
+the detection capability comes from non-linear structure in the data.
+
+**Files:**
+
+```text
+ml/models/logistic_regression.py     (new)
+scripts/train_model_tuned.py         (extend to include LR)
+```
+
+**Primary reference:** scikit-learn `LogisticRegression`,
+`GridSearchCV`, `StratifiedKFold`.
+
+**Secondary reference:** This project's Phase 10 static baseline and
+Phase 11 tuned tree-family pipeline (Phase 11b reuses the same CV /
+tuning / multi-seed infrastructure).
+
+### Motivation
+
+The current model lineup jumps from "hand-written thresholds and rules"
+(Phase 10) straight to "tree ensembles" (Phase 9 / Phase 11). There is
+no linear ML model in between. Without one, the report cannot answer:
+
+- How much of the detection capability comes from non-linear structure
+  in the feature space, and how much is already captured by a linear
+  decision boundary?
+- If Logistic Regression performs close to XGBoost, the fault patterns
+  are largely linearly separable and tree ensembles are over-engineered
+  for this task.
+- If Logistic Regression performs much worse than XGBoost, the fault
+  patterns require non-linear interactions, which justifies the tree
+  ensemble choice.
+
+Phase 11b answers this question with one additional model.
+
+### Tasks
+
+- [ ] implement `train_logistic_regression(X, y)` in
+      `ml/models/logistic_regression.py`
+- [ ] apply `class_weight='balanced'` consistent with Phase 11
+- [ ] run `GridSearchCV` on `trainval` with macro-F1 as selection metric
+- [ ] reuse Phase 11's `StratifiedKFold(n_splits=5)` and seed list
+- [ ] refit on full `trainval` with best hyperparameters
+- [ ] report multi-seed test metrics (mean ± std)
+- [ ] add per-class precision/recall/F1 to `per_class_report.csv`
+- [ ] persist tuned LR model to
+      `results/models/logistic_regression_tuned.joblib`
+- [ ] extend `model_metrics_tuned.csv` with the LR row
+
+### Search Space (initial)
+
+```text
+Logistic Regression
+  C        in {0.01, 0.1, 1.0, 10.0}
+  penalty  in {"l2"}                  (l1 requires solver="liblinear" or "saga")
+  solver   in {"lbfgs"}               (default, supports multinomial + l2)
+  max_iter in {1000}                  (raise if convergence warnings appear)
+```
+
+The search space may be extended to include `penalty="l1"` with
+`solver="saga"` once initial runs converge cleanly.
+
+### Output
+
+```text
+results/models/logistic_regression_tuned.joblib
+(LR row appended to)
+results/tables/model_metrics_tuned.csv
+results/tables/best_hyperparameters.csv
+results/tables/per_class_report.csv
+results/tables/cv_results.csv
+```
+
+### Pass Criteria
+
+- [ ] LR training completes under CV + GridSearchCV without convergence
+      warnings (or warnings are documented)
+- [ ] LR test metrics are reported with the same format as Phase 11
+      (mean ± std over >=5 seeds, per-class P/R/F1)
+- [ ] The "static rules → linear ML → tree ensembles" comparison is
+      report-ready in `model_metrics_tuned.csv`
+
+### Design Notes
+
+- **Why only Logistic Regression, not SVM or KNN?** SVM with RBF is
+  slow on 1200 samples × 11 features once wrapped in 5-fold CV +
+  GridSearchCV, and it does not produce per-feature importance for the
+  report. KNN has no feature importance at all and provides no
+  interpretability gain over Phase 10's rule-based baseline. LR is the
+  only linear ML choice that is fast, interpretable, and directly
+  comparable to the tree models via coefficient magnitudes.
+- **Scaling:** Phase 9's `MinMaxScaler` (already fit on `train`) is
+  required for LR. Tree models did not need it but the contract was
+  preserved in Phase 9 precisely so LR can plug in here without
+  changes.
+- **If LR ≈ XGB:** revisit the conclusion that tree ensembles are
+  necessary. Document and discuss in the report rather than hiding
+  the result.
+
+**Deliverable:** A tuned Logistic Regression model and its multi-seed
+evaluation, integrated into the same metrics tables as Phase 11, so
+that Phase 12 experiments can include LR as one of the compared
+models when relevant.
+
+---
+
+## Phase 11c — Literature and Project-Management Evidence
+
+**Goal:** Prepare the report-supporting evidence needed to justify the
+simulator, dataset, ML methodology, and project management process before
+starting the final research-quality experiments in Phase 12.
+
+**Files / Artifacts:**
+
+```text
+notes/literature_review.md           (new or extend existing notes)
+notes/key_papers.md                  (new: methodology support map)
+results/tables/project_plan.csv      (optional export from Excel/Gantt)
+results/figures/project_gantt.png    (optional Gantt chart figure)
+```
+
+### Tasks
+
+- [ ] complete the literature review
+- [ ] identify key papers supporting:
+      PBFT / Byzantine fault tolerance; SimPy-based discrete-event
+      simulation; Byzantine fault injection; ML-based fault detection;
+      baseline comparison; ablation / robustness study design
+- [ ] create a project plan or Gantt chart showing completed phases,
+      remaining phases, and final submission tasks
+- [ ] map each major implementation choice to supporting evidence:
+      simulator design, fault models, feature set, label rules, dataset
+      generation, model selection, baseline comparison, and evaluation
+      metrics
+- [ ] prepare report-ready notes for methodology and project management
+- [ ] keep this section as supporting evidence only; it must not change
+      the Phase 11 training protocol or Phase 12 experimental design
+
+### Pass Criteria
+
+- [ ] literature review draft is complete enough to support the Methodology
+      and Related Work sections of the final report
+- [ ] at least one key reference is mapped to each major methodology choice
+- [ ] project plan / Gantt chart clearly shows progress tracking and
+      remaining work
+- [ ] report can explain why the simulator, dataset, ML models, baselines,
+      and ablation experiments are methodologically justified
+
+**Deliverable:** Literature-review notes, key-paper mapping, and
+project-management evidence ready to be reused in the final report.
+
+---
+
+## Phase 12 — Research-Quality Experiments
 
 **Goal:** Produce report-ready experimental evidence.
 
@@ -974,30 +1256,32 @@ baseline/static_detection.py
 
 **Secondary reference:** Talaria for simulation-study reporting style, and ai-bft-consensus for ML + consensus discussion angles.
 
-### 11.A Main Experiments
+### 12.A Main Experiments
 
 - [ ] ablation test
+- [ ] feature set ablation: 11 features vs 13 features
+      (adds `quorum_margin`, `prepare_count_std`)
 - [ ] robustness test
 - [ ] scalability test
 - [ ] per-fault-type analysis
 - [ ] prediction lead time analysis
 - [ ] SHAP feature importance
 
-### 11.B Advanced Fault Robustness
+### 12.B Advanced Fault Robustness
 
 - [ ] Train on the main fault set only
 - [ ] Test on forgery and Phase 4c enhanced modes as out-of-distribution data
 - [ ] Report degradation in F1-score, recall, and confusion matrix quality
 - [ ] Optional opt-in run: `train_on_extended=True`
 
-### 11.C Authentication Ablation
+### 12.C Authentication Ablation
 
 - [ ] Evaluate forgery as an authentication-ablation scenario
 - [ ] Compare `fault_intensity in {0.2, 0.5, 1.0}`
 - [ ] Report whether forged votes alter quorum timing or label distribution
 - [ ] Clearly state that production PBFT normally relies on authenticated messages
 
-### 11.D Strict-Round-Validation Ablation
+### 12.D Strict-Round-Validation Ablation
 
 - [ ] Run stale replay with `STRICT_ROUND_VALIDATION=True`
 - [ ] Run stale replay with `STRICT_ROUND_VALIDATION=False`

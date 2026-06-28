@@ -3,7 +3,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from config import RAW_DATA_FILE, FEATURE_COLUMNS, TARGET_COLUMN, RANDOM_SEED
 
-
+# For defualt ML training
 def load_and_split(csv_path=RAW_DATA_FILE):
     df = pd.read_csv(csv_path)
     X = df[FEATURE_COLUMNS]
@@ -16,3 +16,19 @@ def load_and_split(csv_path=RAW_DATA_FILE):
     X_val = scaler.transform(X_val)
     X_test = scaler.transform(X_test_raw)
     return X_train, X_val, X_test, X_train_raw, X_test_raw, y_train, y_val, y_test, scaler
+
+
+# For tunning ML training
+def load_and_split_trainval(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+
+    df = pd.read_csv(csv_path)
+    X = df[FEATURE_COLUMNS]
+    y = df[TARGET_COLUMN]
+
+    X_trainval_raw, X_test_raw, y_trainval, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=seed)
+
+    scaler = MinMaxScaler()
+    X_trainval = scaler.fit_transform(X_trainval_raw)
+    X_test = scaler.transform(X_test_raw)
+
+    return X_trainval, X_test, y_trainval, y_test, scaler
