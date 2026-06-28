@@ -149,6 +149,11 @@ PARAM_GRIDS = {
         'max_depth': [3, 6, 10],
         'learning_rate': [0.05, 0.1, 0.2],
     },
+    'logistic_regression': {
+    'C':        [0.01, 0.1, 1.0, 10.0],
+    'solver':   ['lbfgs'],
+    'max_iter': [1000],
+    } 
 }
 
 

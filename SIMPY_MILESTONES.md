@@ -1003,21 +1003,21 @@ Phase 11 closes these gaps before any Phase 12 experiment runs.
 
 ### Tasks
 
-- [ ] inspect `label` distribution and document class balance
-- [ ] add `class_weight='balanced'` (or equivalent) where appropriate
-- [ ] merge train + val into a single `trainval` set (80% of data) for CV;
+- [x] inspect `label` distribution and document class balance
+- [x] add `class_weight='balanced'` (or equivalent) where appropriate
+- [x] merge train + val into a single `trainval` set (80% of data) for CV;
       keep the existing 20% test set untouched
-- [ ] implement `StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_SEED)`
-- [ ] run `GridSearchCV` per model on `trainval` with macro-F1 as the
+- [x] implement `StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_SEED)`
+- [x] run `GridSearchCV` per model on `trainval` with macro-F1 as the
       selection metric
-- [ ] refit each model on the full `trainval` with the best hyperparameters
-- [ ] repeat training under multiple seeds (e.g. [42, 0, 1, 2, 3]) and
+- [x] refit each model on the full `trainval` with the best hyperparameters
+- [x] repeat training under multiple seeds (e.g. [42, 0, 1, 2, 3]) and
       report mean ± std of test metrics
-- [ ] add `classification_report` (per-class precision/recall/F1) to the
+- [x] add `classification_report` (per-class precision/recall/F1) to the
       evaluation output
-- [ ] persist tuned models and the fitted scaler to
+- [x] persist tuned models and the fitted scaler to
       `results/models/*_tuned.joblib`
-- [ ] keep Phase 9's default-hyperparameter models in place (do not delete
+- [x] keep Phase 9's default-hyperparameter models in place (do not delete
       `decision_tree.joblib` etc.) so Phase 12 can report "default vs tuned"
       as one of its ablations
 
@@ -1063,14 +1063,14 @@ results/models/scaler_tuned.joblib
 
 ### Pass Criteria
 
-- [ ] 5-fold CV completes for all three models
-- [ ] reported test F1 (mean ± std over >=5 seeds) is documented
-- [ ] best hyperparameters are saved and reproducible from
+- [x] 5-fold CV completes for all three models
+- [x] reported test F1 (mean ± std over >=5 seeds) is documented
+- [x] best hyperparameters are saved and reproducible from
       `cv_results.csv`
-- [ ] tuned model test F1 >= default model test F1 for every model
+- [x] tuned model test F1 >= default model test F1 for every model
       (otherwise document why and revisit the search space)
-- [ ] per-class metrics are saved for every (model, split)
-- [ ] Phase 9 default models remain on disk for the Phase 12.B
+- [x] per-class metrics are saved for every (model, split)
+- [x] Phase 9 default models remain on disk for the Phase 12.B
       "default vs tuned" ablation
 
 ### Design Notes

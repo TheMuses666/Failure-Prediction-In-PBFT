@@ -1,7 +1,4 @@
 import joblib
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 import pandas as pd
 from sklearn.metrics import classification_report
 from sklearn.utils.class_weight import compute_sample_weight
@@ -9,6 +6,10 @@ from sklearn.utils.class_weight import compute_sample_weight
 from ml.preprocessing import load_and_split_trainval
 from ml.tuning import tune_model
 from ml.evaluation import model_evaluation
+from ml.models.logistic_regression import build_logistic_regression
+from ml.models.random_forest import build_random_forest
+from ml.models.decision_tree import build_decision_tree
+from ml.models.xgboost_model import build_xgboost
 from config import RANDOM_SEED, RANDOM_SEEDS, PARAM_GRIDS, RESULTS_MODELS_DIR, RAW_DATA_FILE, RESULTS_TABLES_DIR
 
 
@@ -28,9 +29,10 @@ def main():
         sample_weight = compute_sample_weight('balanced', y_trainval)
 
         candidates = [
-            ('decision_tree',  DecisionTreeClassifier(random_state=seed, class_weight = 'balanced'),     PARAM_GRIDS['decision_tree']),
-            ('random_forest',  RandomForestClassifier(random_state=seed, class_weight = 'balanced'),     PARAM_GRIDS['random_forest']),
-            ('xgboost',        XGBClassifier(random_state=seed),              PARAM_GRIDS['xgboost']),
+            ('decision_tree',  build_decision_tree(seed),     PARAM_GRIDS['decision_tree']),
+            ('random_forest',  build_random_forest(seed),     PARAM_GRIDS['random_forest']),
+            ('xgboost',        build_xgboost(seed),              PARAM_GRIDS['xgboost']),
+            ('logistic_regression', build_logistic_regression(seed), PARAM_GRIDS['logistic_regression']),
         ]
 
         for name, estimator, grid in candidates:
