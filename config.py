@@ -23,7 +23,8 @@ QUORUM = (2*NUM_BYZANTINE_NODES + 1) / NUM_NODES
 NUM_NORMAL_NODES = NUM_NODES - NUM_BYZANTINE_NODES
 PBFT_MIN_NODES_REQUIREMENT = 3*NUM_BYZANTINE_NODES + 1
 
-FAULT_TYPES = ['silent', 'replay','equivocation','delay']   
+FAULT_TYPES = ['silent', 'replay','equivocation','delay']  
+FAULT_TYPES_TO_EVAL = ['normal', 'silent', 'replay', 'equivocation', 'delay'] 
 ROUNDS_PER_FAULT = 200
 NORMAL_ROUNDS = 400
 
@@ -127,8 +128,9 @@ METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 # Experiments
 # =========================
 
-SCALABILITY_NODE_COUNTS = [7, 10, 13]
+SCALABILITY_NODE_COUNTS = [10, 13]
 ROBUSTNESS_BYZANTINE_COUNTS = [1, 3]
+BZY_ID_SCALABILITY = {10: [7,8,9],13:[9,10,11,12]}
 
 # =========================
 # ML Hyperparameter Search Space (Phase 11)

@@ -15,6 +15,7 @@ from src.data.feature_extractor import extract_features
 from src.data.label_generator import generate_label
 
 def make_pipeline(estimator):
+    """Wrap a model with MinMax scaling using the shared pipeline format."""
     return Pipeline([('scaler', MinMaxScaler()), ('clf', estimator)])
 
 def train_default_pipeline_multiseed(
@@ -24,6 +25,7 @@ def train_default_pipeline_multiseed(
     seeds=RANDOM_SEEDS,
     label_col=TARGET_COLUMN,
 ):
+    """Train default model pipelines across seeds and collect aggregate metrics."""
     records = []
     per_class_records = []
 
@@ -55,6 +57,7 @@ def train_default_pipeline_multiseed(
     return records, per_class_records
 
 def build_and_fit_all_candidates(seed, X_tv, y_tv):
+    """Build and fit all configured ML candidates for one trainval split."""
     sample_weight = compute_sample_weight('balanced', y_tv)
     candidates = [
         ('decision_tree',       build_decision_tree(seed)),
@@ -75,6 +78,7 @@ def build_and_fit_all_candidates(seed, X_tv, y_tv):
 
 
 def collect_rows(start_id, n_rounds, fault_type, byz_ids, fault_subtype='base', **sim_kwargs):
+    """Run PBFT simulation rounds and convert raw outputs into dataset rows."""
     raws = run_pbft_simulation(
         start_round=start_id,
         fault_type=fault_type,

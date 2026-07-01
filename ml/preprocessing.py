@@ -5,6 +5,7 @@ from config import RAW_DATA_FILE, FEATURE_COLUMNS, TARGET_COLUMN, RANDOM_SEED
 
 # For defualt ML training
 def load_and_split(csv_path=RAW_DATA_FILE):
+    """Load the main dataset and create scaled train, validation, and test splits."""
     df = pd.read_csv(csv_path)
     X = df[FEATURE_COLUMNS]
     y= df[TARGET_COLUMN]
@@ -20,6 +21,7 @@ def load_and_split(csv_path=RAW_DATA_FILE):
 
 # For tunning ML training
 def load_and_split_trainval(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+    """Load the main dataset and create a scaled trainval/test split for tuning."""
 
     df = pd.read_csv(csv_path)
     X = df[FEATURE_COLUMNS]
@@ -35,6 +37,7 @@ def load_and_split_trainval(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
 
 # Multi-seed for baseline raw data
 def load_and_split_trainval_raw(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+    """Load the main dataset and return raw trainval/test splits for pipelines."""
     df = pd.read_csv(csv_path)
     X = df[FEATURE_COLUMNS]
     y = df[TARGET_COLUMN]
@@ -45,6 +48,7 @@ def load_and_split_trainval_raw(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
 
 # Multi-seed for extend features
 def load_and_split_trainval_ext(feature_cols = FEATURE_COLUMNS,target_cols = TARGET_COLUMN,csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+    """Load selected feature columns and return raw trainval/test splits."""
     df = pd.read_csv(csv_path)
     X = df[feature_cols]
     y = df[target_cols]

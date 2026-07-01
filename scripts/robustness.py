@@ -3,6 +3,7 @@ from utils.helpers import build_and_fit_all_candidates
 from config import RAW_DATA_FILE, DATA_RAW_DIR, FEATURE_COLUMNS_EXTEND, RANDOM_SEEDS, TARGET_COLUMN, RESULTS_TABLES_DIR
 from ml.preprocessing import load_and_split_trainval_ext
 from sklearn.metrics import f1_score
+from ml.evaluation import aggregate_metrics
 
 def main():
     df_f1 = pd.read_csv(DATA_RAW_DIR / 'robustness_f1.csv')
@@ -22,10 +23,8 @@ def main():
                 f1 = f1_score(y_test, pipe.predict(X_test_raw), average='macro')
                 records.append({'seed': seed, 'model': name, 'f': f_count, 'f1': f1})
     
-    df = pd.DataFrame(records)
-    summary = df.groupby(['model','f'])['f1'].agg(['mean','std']).reset_index()
-    summary.to_csv(RESULTS_TABLES_DIR / 'robustness_curve.csv', index=False)
-    print(summary)
+    aggregate_metrics(records, ['model','f'], ['f1'],
+                  out_path=RESULTS_TABLES_DIR / 'robustness_curve.csv')
 
 
 if __name__ == '__main__':

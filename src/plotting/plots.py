@@ -119,3 +119,64 @@ def plot_grouped_curve(
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print(f'Figure saved --> {out_path}')
+
+
+def plot_grouped_bar(
+    df, out_path,
+    x_col,           # e.g. 'fault_type'
+    y_col,           # e.g. 'detection_rate_mean'
+    std_col,         # e.g. 'detection_rate_std'
+    group_col,       # e.g. 'model'
+    x_label,
+    y_label,
+    title=None,
+    y_lim=None,
+    figsize=(9, 5),
+):
+
+    import numpy as np
+    
+    df_plot = df.dropna(subset=[y_col]).copy()
+    
+    x_categories = sorted(df_plot[x_col].unique())
+    groups = sorted(df_plot[group_col].unique())
+    
+    n_groups = len(groups)
+    bar_width = 0.8 / n_groups
+    x_positions = np.arange(len(x_categories))
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    for i, group_name in enumerate(groups):
+        offsets = x_positions + (i - n_groups/2 + 0.5) * bar_width
+        
+        # 从 df 拿该 group 每个 x 的值
+        means, stds = [], []
+        for xc in x_categories:
+            row = df_plot[(df_plot[group_col] == group_name) & (df_plot[x_col] == xc)]
+            if len(row) == 0:
+                means.append(np.nan)
+                stds.append(0)
+            else:
+                means.append(row[y_col].values[0])
+                stds.append(row[std_col].values[0] if std_col else 0)
+        
+        ax.bar(offsets, means, bar_width, yerr=stds, label=group_name,
+               capsize=3, alpha=0.85)
+    
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(x_categories, rotation=0)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    if y_lim:
+        ax.set_ylim(y_lim)
+    if title:
+        ax.set_title(title)
+    ax.legend(loc='lower left')
+    ax.grid(True, alpha=0.3, axis='y')
+    
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Figure saved --> {out_path}')
