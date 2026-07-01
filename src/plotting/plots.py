@@ -65,3 +65,57 @@ def plot_variance_comparison(df, feature_cols, comparisons, out_path, title = No
     plt.close(fig)
     print(f'Figure Saved --> {out_path}')
 
+
+def plot_grouped_curve(
+    df,               
+    out_path,         
+    x_col,              
+    y_col,                
+    std_col,               
+    group_col,            
+    x_label,             
+    y_label,              
+    title=None,
+    vline_x=None,         
+    vline_label=None,      
+    x_ticks=None,         
+    y_lim=(0.5, 1.0),
+    markers=None,         
+):
+    fig, ax = plt.subplots(figsize=(7, 5))
+    
+    for group_name in df[group_col].unique():
+        sub = df[df[group_col] == group_name].sort_values(x_col)
+        
+        m = markers[group_name] if markers else 'o'
+        line, = ax.plot(sub[x_col], sub[y_col], marker=m, label=group_name)
+        
+        ax.fill_between(
+            sub[x_col],
+            sub[y_col] - sub[std_col],
+            sub[y_col] + sub[std_col],
+            alpha=0.2,
+            color=line.get_color(),   
+        )
+    
+    if vline_x is not None:
+        ax.axvline(x=vline_x, color='red', linestyle='--', alpha=0.5)
+        if vline_label:
+            ax.text(vline_x + 0.05, y_lim[0] + 0.35, vline_label,
+                    color='red', fontsize=9)
+    
+    if x_ticks:
+        ax.set_xticks(x_ticks)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_ylim(y_lim)
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc='lower left')
+    if title:
+        ax.set_title(title)
+    
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Figure saved --> {out_path}')

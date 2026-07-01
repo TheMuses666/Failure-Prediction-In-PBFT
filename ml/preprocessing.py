@@ -42,3 +42,13 @@ def load_and_split_trainval_raw(csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
         X, y, test_size=0.2, stratify=y, random_state=seed
     )
     return X_trainval_raw, X_test_raw, y_trainval, y_test
+
+# Multi-seed for extend features
+def load_and_split_trainval_ext(feature_cols = FEATURE_COLUMNS,target_cols = TARGET_COLUMN,csv_path=RAW_DATA_FILE, seed=RANDOM_SEED):
+    df = pd.read_csv(csv_path)
+    X = df[feature_cols]
+    y = df[target_cols]
+    X_trainval_raw, X_test_raw, y_trainval, y_test = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=seed
+    )
+    return X_trainval_raw, X_test_raw, y_trainval, y_test

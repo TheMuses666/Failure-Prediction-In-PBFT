@@ -91,6 +91,8 @@ FEATURE_COLUMNS = [
     "vote_deviation"
 ]
 
+FEATURE_COLUMNS_EXTEND = FEATURE_COLUMNS + ['quorum_margin', 'prepare_count_std']
+
 AUXILIARY_COUNTERS = ["forged", "replayed", "same_round_replayed",
                       "stale_replayed", "equivocated", "delayed",
                       "delay_probability", "strict_round_validation"]
@@ -126,7 +128,7 @@ METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 # =========================
 
 SCALABILITY_NODE_COUNTS = [7, 10, 13]
-ROBUSTNESS_BYZANTINE_RATIOS = [0.1, 0.2, 0.3]
+ROBUSTNESS_BYZANTINE_COUNTS = [1, 3]
 
 # =========================
 # ML Hyperparameter Search Space (Phase 11)
@@ -160,7 +162,7 @@ PARAM_GRIDS = {
 # Phase 7 写 CSV 之前调用一次，确保 extract_features 的 keys
 # 跟 FEATURE_COLUMNS + AUXILIARY_COLUMNS 完全对得上。
 def assert_feature_schema(feature_dict: dict) -> None:
-    expected = set(FEATURE_COLUMNS) | set(AUXILIARY_COLUMNS)
+    expected = set(FEATURE_COLUMNS_EXTEND) | set(AUXILIARY_COLUMNS)
     actual = set(feature_dict.keys())
     missing = expected - actual
     extra = actual - expected

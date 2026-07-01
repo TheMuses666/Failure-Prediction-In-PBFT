@@ -1,10 +1,7 @@
-from src.simulation.pbft import run_pbft_simulation
-from src.simulation.round_result import build_round_result
-from src.data.feature_extractor import extract_features
-from src.data.label_generator import generate_label
-from config import assert_feature_schema, FAULT_TYPES, RAW_DATA_FILE, DATA_RAW_DIR, EXTENDED_DATA_FILE
+from config import FAULT_TYPES, RAW_DATA_FILE, DATA_RAW_DIR, EXTENDED_DATA_FILE
 import pandas as pd
 from collections import Counter
+from utils.helpers import collect_rows
 
 n_normal = 400
 n_fault = 200
@@ -23,32 +20,6 @@ extended_configs = [
     ('delay_lognormal', N_PHASE4C,  'delay',        {'delay_distribution': 'lognormal'}),
     ('replay_stale',    N_PHASE4C,  'replay',       {'replay_mode': 'stale'}),
 ]
-
-def collect_rows(start_id, n_rounds, fault_type, byz_ids, fault_subtype='base', **sim_kwargs):
-    raws = run_pbft_simulation(
-        start_round=start_id,
-        fault_type=fault_type,
-        byzantine_node_ids=byz_ids,
-        n_rounds=n_rounds,
-        **sim_kwargs
-    )
-    rows_chunk = []
-    for raw in raws:
-        rr = build_round_result(raw)
-        features = extract_features(rr)
-        assert_feature_schema(features)
-        label = generate_label(rr, features)
-        rows_chunk.append({
-            'round_id':rr['round_id'],
-            'fault_type': rr['fault_type'],
-            'fault_subtype': fault_subtype,
-            'byzantine_node_ids': rr['byzantine_node_ids'],
-            'success': rr['success'],
-            'timeout': rr['timeout'],
-            **features,
-            'label':label,
-        })
-    return rows_chunk
 
 
 def main():
