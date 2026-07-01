@@ -15,7 +15,7 @@ so the injector doubles as the "null" baseline.
 import random, dataclasses, math
 from typing import Any
 
-from simulation.message import Message
+from src.simulation.message import Message
 from config import BYZANTINE_DELAY_MS, RANDOM_SEED, NUM_NODES
 
 
@@ -110,7 +110,7 @@ class FaultInjector:
             sample = self.rng.gauss(mean, self.delay_jitter_ms)
         elif self.delay_distribution == 'lognormal':                                
             mu = math.log(mean)                           
-            sigma = self.delay_jitter_ms / mean              
+            sigma = 0.6              
             sample = self.rng.lognormvariate(mu, sigma)
         else:
             raise ValueError(f'unknown delay_distribution: {self.delay_distribution}')

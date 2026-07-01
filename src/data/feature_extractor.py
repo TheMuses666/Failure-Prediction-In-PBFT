@@ -66,6 +66,18 @@ def extract_features(round_result: dict) ->dict:
     # Voting Consistency
     voting_consistency = len(round_result['committed_node_ids']) / round_result['total_nodes']
 
+   # Quorum Margin
+    quorum_margin = voting_consistency - (round_result['quorum_size'] / round_result['total_nodes'])
+
+    # Prepare_count_std
+    prepare_count = Counter()
+    for m in round_result['prepare_messages']:
+      prepare_count[m.receiver_id] += 1
+    for nid in range(round_result['total_nodes']):
+      if nid not in prepare_count:
+         prepare_count[nid] = 0
+    prepare_count_std = float(np.std(list(prepare_count.values())))
+
     # Message Consistency
     commit_msgs = round_result['commit_messages']
     if len(commit_msgs) != 0:
@@ -100,6 +112,8 @@ def extract_features(round_result: dict) ->dict:
         'voting_consistency': voting_consistency,
         'message_consistency': message_consistency,
         'vote_deviation': vote_deviation,
+        'quorum_margin': quorum_margin,
+        'prepare_count_std': prepare_count_std,
 
         # Auxiliary Counters
         'forged': round_result['forged'],

@@ -9,7 +9,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 DATA_RAW_DIR = ROOT_DIR / 'data' / 'raw'
 DATA_PROCESSED_DIR = ROOT_DIR / 'data' / 'processed'
 RESULTS_FIGURES_DIR = ROOT_DIR / 'results' / 'figures'
-RESULTS_METRICS_DIR = ROOT_DIR / 'results' / 'metrics'
+RESULTS_TABLES_DIR = ROOT_DIR / 'results' / 'tables'
 RESULTS_MODELS_DIR = ROOT_DIR / 'results' / 'models'
 EXTENDED_DATA_FILE = DATA_RAW_DIR / "extended_robustness.csv"
 
@@ -19,16 +19,19 @@ EXTENDED_DATA_FILE = DATA_RAW_DIR / "extended_robustness.csv"
 
 NUM_NODES = 7
 NUM_BYZANTINE_NODES = 2
+QUORUM = (2*NUM_BYZANTINE_NODES + 1) / NUM_NODES
 NUM_NORMAL_NODES = NUM_NODES - NUM_BYZANTINE_NODES
 PBFT_MIN_NODES_REQUIREMENT = 3*NUM_BYZANTINE_NODES + 1
 
-FAULT_TYPES = ['silent', 'replay','equivocation','delay']   
+FAULT_TYPES = ['silent', 'replay','equivocation','delay']  
+FAULT_TYPES_TO_EVAL = ['normal', 'silent', 'replay', 'equivocation', 'delay'] 
 ROUNDS_PER_FAULT = 200
 NORMAL_ROUNDS = 400
 
 TOTAL_SIMULATION_ROUNDS = ROUNDS_PER_FAULT * len(FAULT_TYPES) + NORMAL_ROUNDS
 
 RANDOM_SEED = 42
+RANDOM_SEEDS = [42, 31,8,66,2]
 
 STRICT_ROUND_VALIDATION = True
 
@@ -89,21 +92,15 @@ FEATURE_COLUMNS = [
     "vote_deviation"
 ]
 
-AUXILIARY_COLUMNS = [
-    # Per-round event counters
-    "forged",
-    "replayed",
-    "same_round_replayed",
-    "stale_replayed",
-    "equivocated",
-    "delayed",
+FEATURE_COLUMNS_EXTEND = FEATURE_COLUMNS + ['quorum_margin', 'prepare_count_std']
 
-    # FaultInjector configuration snapshot
-    "silent_mode",
-    "delay_probability",
-    "delay_distribution",
-    "strict_round_validation",
-]
+AUXILIARY_COUNTERS = ["forged", "replayed", "same_round_replayed",
+                      "stale_replayed", "equivocated", "delayed",
+                      "delay_probability", "strict_round_validation"]
+
+AUXILIARY_CONFIG = ["silent_mode", "delay_distribution"]
+
+AUXILIARY_COLUMNS = AUXILIARY_COUNTERS + AUXILIARY_CONFIG 
 
 TARGET_COLUMN = "label"
 
@@ -125,22 +122,53 @@ BYZANTINE_DELAY_MS = 300
 RAW_DATA_FILE = DATA_RAW_DIR / "consensus_data.csv"
 PROCESSED_DATA_FILE = DATA_PROCESSED_DIR/ "processed_consensus_data.csv"
 
-METRICS_FILE = RESULTS_METRICS_DIR / "model_metrics.csv"
+METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 
 # =========================
 # Experiments
 # =========================
 
-SCALABILITY_NODE_COUNTS = [7, 10, 13]
-ROBUSTNESS_BYZANTINE_RATIOS = [0.1, 0.2, 0.3]
+SCALABILITY_NODE_COUNTS = [10, 13]
+ROBUSTNESS_BYZANTINE_COUNTS = [1, 3]
+BZY_ID_SCALABILITY = {10: [7,8,9],13:[9,10,11,12]}
+
+# =========================
+# ML Hyperparameter Search Space (Phase 11)
+# =========================
+
+PARAM_GRIDS = {
+    'decision_tree': {
+        'max_depth': [None, 5, 10, 20],
+        'min_samples_leaf': [1, 2, 5],
+    },
+    'random_forest': {
+        'n_estimators': [100, 300],
+        'max_depth': [None, 10, 20],
+        'min_samples_leaf': [1, 2],
+        'min_samples_split':[2,5,10],
+        'max_features': ['sqrt','log2',None]
+    },
+    'xgboost': {
+        'n_estimators': [100, 300],
+        'max_depth': [3, 6, 10],
+        'learning_rate': [0.05, 0.1, 0.2],
+    },
+    'logistic_regression': {
+    'C':        [0.01, 0.1, 1.0, 10.0],
+    'solver':   ['lbfgs'],
+    'max_iter': [1000],
+    } 
+}
 
 
 # Phase 7 写 CSV 之前调用一次，确保 extract_features 的 keys
 # 跟 FEATURE_COLUMNS + AUXILIARY_COLUMNS 完全对得上。
 def assert_feature_schema(feature_dict: dict) -> None:
-    expected = set(FEATURE_COLUMNS) | set(AUXILIARY_COLUMNS)
+    expected = set(FEATURE_COLUMNS_EXTEND) | set(AUXILIARY_COLUMNS)
     actual = set(feature_dict.keys())
     missing = expected - actual
     extra = actual - expected
     assert not missing, f"Missing from feature_dict: {missing}"
     assert not extra, f"Unknown keys in feature_dict: {extra}"
+
+
