@@ -399,6 +399,165 @@ Four observations:
    attacks in a 7-node network with f=2 rarely cause outright
    failure), not a metric or model issue.
 
+## Phase 12.A-6: Prediction Lead Time
+
+Phase 12.A-6 measures how far in advance a trained classifier can flag
+a failure-causing round, measured in milliseconds of "lead time" from
+the earliest cutoff at which the model predicts label=2 back to the
+round's timeout deadline (`CONSENSUS_TIMEOUT_MS = 150 ms`). Cutoffs
+are 25/50/75/100/125/150 ms (`config.CUTOFFS_MS`).
+
+The phase went through two failed-then-diagnosed iterations before the
+final design. Both dead ends are documented here because the diagnosis
+chain is itself a report-worthy result.
+
+### Iteration 1: naive slicing — 100% detection, 100% false alarm
+
+The first implementation trained models on `consensus_data.csv`
+(full-round features) and predicted on time-sliced features from
+`compute_features_at_time(rr, cutoff_ms)`. Result: detection rate 100%
+at cutoff=25 for every (model, fault_type) — but false alarm rate on
+normal rounds was **also 100%** at cutoff=25/50. The initial suspicion
+was `message_drop_rate`, which at the time was not time-sliced: it
+used the full-round `dropped / sent` scalars, leaking the round's
+final outcome into the earliest snapshot.
+
+### Fix 1: real time-slicing of `message_drop_rate`
+
+- `build_round_result` now exposes `'all_messages'` (every message
+  sent during the round, delivered or not; dropped messages have
+  `delivery_time=None`).
+- `compute_features_at_time` computes
+  `sent_by_cutoff = |{m : send_time <= cutoff}|` and
+  `dropped_by_cutoff = |{m : send_time <= cutoff, delivery_time=None}|`.
+  Known approximation: whether an undelivered message is "dropped" vs
+  "in flight" uses the end-of-simulation truth, since drop events are
+  not timestamped. Acceptable for this experiment.
+- The `test_lead_time.py` invariant
+  (`compute_features_at_time(rr, ∞) == extract_features(rr)`) still
+  passes: at infinity the sliced counters equal the round scalars.
+
+**Side discovery — ghost messages in `message_log`.** The invariant
+test caught a latent `simpy_network.py` bug: `send_message` appended
+the original `msg` to `message_log` unconditionally, but when the
+fault injector *substitutes* the message (equivocation returns
+`[forked]` without the original), the original was never delivered
+nor removed — a permanent `delivery_time=None` ghost entry. Invisible
+before now because all prior consumers filtered on
+`delivery_time is not None`; the time-sliced drop-rate count was the
+first code path to read undelivered messages. Fixed by removing the
+original from `message_log` when `result[0] is not msg`. **No prior
+phase is affected**: `extract_features` and all dataset generation
+read the `round_stats` scalars, never `message_log`.
+
+### Iteration 2 diagnosis: the real cause is train/inference distribution mismatch
+
+After Fix 1, the false-alarm curve was essentially unchanged (still
+~100% at cutoff=25/50). Drop-rate leakage was real but was not the
+main driver. A feature-level comparison of normal-round snapshots
+against the training distribution located the actual cause:
+
+| feature | normal @ 25ms | label=0 train mean | label=2 train mean |
+|---|---|---|---|
+| voting_consistency | 0.000 | 0.996 | 0.488 |
+| quorum_margin | −0.714 | +0.282 | −0.227 |
+| message_consistency | 0.000 | 0.983 | 0.695 |
+| response_time | 97.4 | 34.6 | 126.1 |
+
+At 25 ms no node has committed yet, so a *healthy* round's snapshot
+(nothing committed, zero consistency, deeply negative quorum margin)
+sits squarely in — indeed beyond — the label=2 region of the training
+distribution. A model trained only on end-of-round features has never
+seen "a round 1/6 of the way through" and faithfully classifies every
+early snapshot as failure. The 100% false alarm rate was the model
+working as trained, not a feature bug. Conversely, the 100% detection
+rate was meaningless: the model flagged *everything* early.
+
+### Final design: per-cutoff training on snapshot features
+
+The fix is to let the model see mid-round snapshots at training time
+(standard early-classification setup):
+
+- `scripts/generate_lead_time_train.py` (new) simulates the main-set
+  composition (4 fault types × `ROUNDS_PER_FAULT` + `NORMAL_ROUNDS`
+  normal = 1200 rounds) and writes
+  `data/raw/lead_time_snapshots.csv`: one row per (round, cutoff) =
+  7200 rows. Features are sliced at the cutoff; the label is computed
+  **once per round from full-round features** (the final outcome),
+  so every cutoff row of a round carries the same label — the model
+  learns "given the view at t, will this round fail", i.e. genuine
+  prediction rather than description of current state.
+- `scripts/lead_time.py` (rewritten) trains one model set **per
+  cutoff** (6 cutoffs × 4 models × 5 seeds). Train/test split is
+  **group-wise by `round_uid`** (stratified by round label,
+  `test_size=0.2`, per-seed `random_state`): all 6 snapshots of a
+  round stay on the same side, otherwise correlated slices of the
+  same round would leak across the split.
+- Lead time per (seed, model, failure round): the earliest cutoff
+  whose *own* model predicts 2, `lead = 150 − cutoff`; never-alarmed
+  rounds count as missed (`detected=0`, `lead_time_ms=0`). False
+  alarm per (model, cutoff): fraction of normal-round snapshots
+  predicted as 2.
+
+### Results (5 seeds)
+
+False alarm rate on normal rounds:
+
+| cutoff | DT    | LR    | RF    | XGB   |
+|--------|-------|-------|-------|-------|
+| 25     | 0.334 | 0.062 | 0.252 | 0.284 |
+| 50     | 0.107 | 0.062 | 0.072 | 0.070 |
+| 75     | 0.027 | 0.025 | 0.017 | 0.012 |
+| 100+   | ~0    | ~0    | ~0    | ~0    |
+
+Lead time (ms, mean ± std over detected rounds) and detection rate:
+
+| fault_type | DT | LR | RF | XGB | detection |
+|---|---|---|---|---|---|
+| silent | 113.6 ± 20.5 | 118.2 ± 20.6 | 119.7 ± 13.5 | 115.5 ± 20.6 | 100% |
+| delay | 108.2 ± 25.3 | 110.8 ± 20.9 | 111.2 ± 20.1 | 109.3 ± 22.5 | 100% |
+| equivocation | 86.9 ± 22.8 | 88.1 ± 21.2 | 88.8 ± 20.6 | 88.8 ± 19.5 | 92–100% |
+
+Observations:
+
+1. The lead-time ordering matches attack mechanics: silent leaks the
+   earliest signal (Byzantine nodes drop messages from t=0, visible in
+   the now-correctly-sliced `message_drop_rate`), delay is next
+   (elevated latency is observable early), equivocation is last
+   (~60 ms before its signature surfaces) — consistent with the
+   Phase 12.A-5 finding that equivocation is the stealthiest attack.
+2. **Logistic Regression achieves 6.2% FAR at cutoff=25**, vs 25–33%
+   for the tree models. Under a `FAR < 25%` gate, LR is usable from
+   25 ms while trees are usable from 50 ms: the linear model wins the
+   earliest-warning regime, echoing the Phase 12.A-4 result that LR
+   is the most distribution-shift-robust model despite its lower
+   in-distribution ceiling.
+3. Detection is near-total (≥99%; LR 92% on equivocation) once all
+   six cutoffs are allowed, so the informative quantities are the
+   lead-time distribution and the FAR-vs-cutoff curve, not the
+   detection rate itself.
+
+### Files touched in this phase
+
+- `src/simulation/round_result.py` (added `all_messages`)
+- `src/simulation/simpy_network.py` (ghost-message fix in `send_message`)
+- `src/data/feature_extractor.py` (added `compute_features_at_time`;
+  time-sliced `message_drop_rate`)
+- `scripts/generate_lead_time.py` (new — pickle generator; superseded
+  by the snapshot CSV for training, kept for round-level inspection)
+- `scripts/generate_lead_time_train.py` (new — snapshot CSV generator)
+- `scripts/lead_time.py` (rewritten — per-cutoff training + group split)
+- `scripts/plot_lead_time.py` (new — FAR curve + lead-time bar chart)
+- `test_lead_time.py` at project root (new — invariant test)
+- `config.py` (added `FAILURE_CAUSING_FAULTS`, `BYZ_IDS`, `CUTOFFS_MS`)
+- `data/raw/lead_time_snapshots.csv` (generated, 7200 rows)
+- `results/tables/lead_time_raw.csv`,
+  `results/tables/lead_time_summary.csv`,
+  `results/tables/lead_time_detection_rate.csv`,
+  `results/tables/lead_time_false_alarm.csv`
+- `results/figures/lead_time_false_alarm.png`,
+  `results/figures/lead_time_comparison.png`
+
 ## Cross-phase feature-extractor decoupling
 
 Before Phase 12.A-2, `feature_extractor.py` referenced `NUM_NODES` and

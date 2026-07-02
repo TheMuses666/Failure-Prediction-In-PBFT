@@ -111,6 +111,9 @@ class SimPyNetwork:
             is_substitute = out_msg is not msg
             is_extra = i>0
 
+            if i == 0 and is_substitute:
+                self.message_log.remove(msg)
+                
             if is_substitute or is_extra:
                 out_msg.message_id = self._new_message_id()
                 out_msg.send_time = self.env.now

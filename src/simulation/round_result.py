@@ -35,6 +35,7 @@ def build_round_result(raw: dict) -> dict:
         'stale_replayed': stats['stale_replayed'],
         'equivocated': stats['equivocated'],
         'forged': stats['forged'],
+        'all_messages': this_round_msgs,
 
         # Fault injector configuration (auxiliary for Phase 11 ablation)
         'silent_mode':        injector.silent_mode        if injector else 'all',

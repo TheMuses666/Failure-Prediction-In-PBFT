@@ -25,6 +25,7 @@ PBFT_MIN_NODES_REQUIREMENT = 3*NUM_BYZANTINE_NODES + 1
 
 FAULT_TYPES = ['silent', 'replay','equivocation','delay']  
 FAULT_TYPES_TO_EVAL = ['normal', 'silent', 'replay', 'equivocation', 'delay'] 
+FAILURE_CAUSING_FAULTS = ['silent', 'equivocation', 'delay']
 ROUNDS_PER_FAULT = 200
 NORMAL_ROUNDS = 400
 
@@ -127,10 +128,11 @@ METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 # =========================
 # Experiments
 # =========================
-
+BYZ_IDS = [4,5]
 SCALABILITY_NODE_COUNTS = [10, 13]
 ROBUSTNESS_BYZANTINE_COUNTS = [1, 3]
 BZY_ID_SCALABILITY = {10: [7,8,9],13:[9,10,11,12]}
+CUTOFFS_MS = [25, 50, 75, 100, 125, 150]
 
 # =========================
 # ML Hyperparameter Search Space (Phase 11)

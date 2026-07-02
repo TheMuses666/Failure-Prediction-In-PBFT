@@ -1258,12 +1258,12 @@ project-management evidence ready to be reused in the final report.
 
 ### 12.A Main Experiments
 
-- [ ] ablation test
-- [ ] feature set ablation: 11 features vs 13 features
+- [x] ablation test
+- [x] feature set ablation: 11 features vs 13 features
       (adds `quorum_margin`, `prepare_count_std`)
-- [ ] robustness test
-- [ ] scalability test
-- [ ] per-fault-type analysis
+- [x] robustness test
+- [x] scalability test
+- [x] per-fault-type analysis
 - [ ] prediction lead time analysis
 - [ ] SHAP feature importance
 
