@@ -1264,8 +1264,8 @@ project-management evidence ready to be reused in the final report.
 - [x] robustness test
 - [x] scalability test
 - [x] per-fault-type analysis
-- [ ] prediction lead time analysis
-- [ ] SHAP feature importance
+- [x] prediction lead time analysis
+- [x] SHAP feature importance
 
 ### 12.B Advanced Fault Robustness
 

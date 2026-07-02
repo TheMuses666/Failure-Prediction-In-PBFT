@@ -558,6 +558,74 @@ Observations:
 - `results/figures/lead_time_false_alarm.png`,
   `results/figures/lead_time_comparison.png`
 
+## Phase 12.A-7: SHAP Feature Importance
+
+Phase 12.A-7 closes 12.A with a model-explanation pass. SHAP values
+answer "how much did this feature push this sample's prediction away
+from the baseline"; for tree models the TreeExplainer algorithm is
+exact and fast, so the analysis targets XGBoost (the strongest
+in-distribution model) with Random Forest as a cross-check. Logistic
+Regression is excluded — its coefficients already are exact global
+importances and need no approximation.
+
+### Setup
+
+`scripts/shap_analysis.py` trains the default four-candidate set on
+the seed-42 trainval split of `consensus_data.csv` (single seed —
+importance analysis is not a performance metric and does not need
+multi-seed averaging) and explains the 20% test set. Because all
+models are wrapped in `Pipeline(MinMaxScaler → clf)`, the scaler and
+the bare classifier are separated: SHAP receives the scaled feature
+matrix and the unwrapped tree model. Multi-class SHAP values (one
+matrix per class) are aggregated as `mean(|SHAP|)` per
+(feature, class) and reported both stacked-by-class in the figure and
+per-class in `shap_importance.csv`.
+
+### Results
+
+XGBoost ranking (mean |SHAP|, total across classes):
+`consensus_agreement_time` (4.75) > `voting_consistency` (3.22) ≈
+`prepare_count_std` (3.22) > `message_drop_rate` (1.75) > ... >
+`quorum_margin` = `timeout_frequency` = `leader_change_frequency`
+= exactly 0.
+
+Four observations:
+
+1. **The Phase 12.A-2 feature-ablation conclusions are independently
+   confirmed.** `prepare_count_std` ranks #3 for XGBoost and #1 for
+   Random Forest; its per-class breakdown shows contributions almost
+   entirely on normal/degraded with ~0 on failure — matching its role
+   as the replay signature (replay rounds are 99% label=1).
+   `quorum_margin` gets exactly zero SHAP from XGBoost, the
+   model-side counterpart of the 12.A-2 correlation finding that it
+   is a constant-offset transform of `voting_consistency`.
+2. **Redundant features expose a model-family difference.** XGBoost
+   assigns exactly 0 to `timeout_frequency` while Random Forest ranks
+   it #2. `timeout_frequency=1` implies
+   `consensus_agreement_time = 150 ms`, so the binary feature is
+   fully subsumed by the continuous one; XGBoost's greedy splitting
+   uses the continuous version and never touches the redundant
+   binary, whereas RF's per-split feature subsampling spreads credit
+   across both. SHAP therefore reflects *what the model uses*, not
+   *what signal exists in the data* — a caveat the report should
+   state when presenting the figure.
+3. **Class-wise structure matches the label semantics.** Failure
+   attribution is dominated by consensus-level features
+   (`consensus_agreement_time`, `voting_consistency`), while
+   degraded/normal separation is driven by network-level features
+   (`prepare_count_std`, `message_drop_rate`, `propagation_pattern`).
+   This mirrors the Phase 6 label rules (failure = quorum/timeout,
+   degraded = latency/drop/consistency warnings) and confirms the
+   model learned the intended structure rather than shortcuts.
+4. `leader_change_frequency` (constant 0 in the dataset) receives
+   exactly zero SHAP from both models, as expected.
+
+### Files touched in this phase
+
+- `scripts/shap_analysis.py` (new)
+- `results/tables/shap_importance.csv` (per model × feature × class)
+- `results/figures/feature_importance.png` (XGBoost, stacked by class)
+
 ## Cross-phase feature-extractor decoupling
 
 Before Phase 12.A-2, `feature_extractor.py` referenced `NUM_NODES` and
