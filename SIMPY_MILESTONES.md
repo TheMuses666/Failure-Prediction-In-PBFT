@@ -880,8 +880,8 @@ scripts/train_model.py
 - [x] feature normalisation (Min-Max, fit on train only)
 - [x] train / validation / test split: 70 / 10 / 20 (stratified, `random_state=42`)
 - [x] train main ML models on the main dataset by default
-- [ ] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default — **deferred to Phase 12.B** (trained models + scaler are persisted so Phase 12.B can load them without retraining)
-- [ ] include advanced modes in training only when an explicit Phase 12 robustness experiment opts in, e.g. `train_on_extended=True` — **deferred to Phase 12.B**
+- [x] evaluate Phase 4b/4c modes as robustness or out-of-distribution tests by default — **completed in Phase 12.B** (`scripts/advanced_fault.py`; fresh default pipelines were used instead of the persisted 11-feature models, see notes/phase12.md)
+- [x] include advanced modes in training only when an explicit Phase 12 robustness experiment opts in, e.g. `train_on_extended=True` — **completed in Phase 12.B** (`--train-on-extended` flag)
 - [x] Decision Tree
 - [x] Random Forest
 - [x] XGBoost
@@ -1269,10 +1269,10 @@ project-management evidence ready to be reused in the final report.
 
 ### 12.B Advanced Fault Robustness
 
-- [ ] Train on the main fault set only
-- [ ] Test on forgery and Phase 4c enhanced modes as out-of-distribution data
-- [ ] Report degradation in F1-score, recall, and confusion matrix quality
-- [ ] Optional opt-in run: `train_on_extended=True`
+- [x] Train on the main fault set only
+- [x] Test on forgery and Phase 4c enhanced modes as out-of-distribution data
+- [x] Report degradation in F1-score, recall, and confusion matrix quality
+- [x] Optional opt-in run: `train_on_extended=True`
 
 ### 12.C Authentication Ablation
 

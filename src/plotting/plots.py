@@ -180,3 +180,21 @@ def plot_grouped_bar(
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print(f'Figure saved --> {out_path}')
+
+
+def plot_confusion_heatmap(cm_df, out_path, label_names, title=None):
+    dists = list(cm_df['distribution'].unique())
+    fig, axes = plt.subplots(1, len(dists), figsize=(5.5 * len(dists), 4.5))
+    for ax, dist in zip(axes, dists):
+        sub = cm_df[cm_df['distribution'] == dist]
+        m = sub.pivot(index='true_label', columns='pred_label', values='count')
+        sns.heatmap(m, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax,
+                    xticklabels=label_names, yticklabels=label_names)
+        ax.set_title(dist); ax.set_xlabel('Predicted'); ax.set_ylabel('True')
+    if title:
+        fig.suptitle(title)
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Figure saved --> {out_path}')

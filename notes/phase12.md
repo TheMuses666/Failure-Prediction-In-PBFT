@@ -644,3 +644,181 @@ This change was a precondition for Phase 12.A-4 (scalability) and is
 also exercised by Phase 12.A-3, since `generate_robustness_test.py`
 passes byzantine_node_ids lists of varying length through the same
 simulator + extractor pipeline.
+
+## Phase 12.B: Advanced Fault OOD Evaluation — Design
+
+Phase 12.B evaluates models trained exclusively on the main fault set
+(`consensus_data.csv`: silent / replay-duplicate / equivocation /
+delay-gaussian) against the seven advanced fault subtypes in
+`extended_robustness.csv` (800 rows, Phase 7): forgery,
+silent_prepare / silent_commit / silent_all, delay_gaussian /
+delay_lognormal, replay_stale. The extended CSV already carries the
+13-feature schema, so no regeneration was needed.
+
+Design decisions:
+
+- **Fresh default-hyperparameter pipelines per seed** (identical
+  protocol to 12.A-3/4/5) instead of the persisted Phase 11 tuned
+  models. The persisted models are 11-feature (12.A-2 outstanding
+  debt) and incompatible with the 13-column CSVs; 12.A-1 established
+  the tuning gain is < 1.5% F1. The in-distribution test column
+  reproduces the 12.A f=2 baselines bit-for-bit, confirming the
+  train / split / predict pipeline is unchanged.
+- **Macro-F1 and macro-recall are reported only at whole-set level.**
+  Several subtypes lack entire label classes (silent_* contains no
+  label=1; forgery has 3/200 label=2), so per-subtype macro-F1 is
+  meaningless. Per-subtype reporting uses
+  `ml.evaluation.evaluate_per_fault_type`
+  (accuracy / detection_rate / failure_recall), reused unchanged from
+  12.A-5 by passing the `fault_subtype` column as the grouping array.
+- **Confusion matrices are summed over the five seeds** (counts, not
+  rates), keyed `(model, true_label, pred_label)` in long format.
+
+Script: `scripts/advanced_fault.py`. Outputs:
+`results/tables/ood_f1{,_trainext}.csv`,
+`ood_per_subtype{,_trainext}.csv`, `ood_confusion{,_trainext}.csv`.
+
+## Phase 12.B: Main OOD Results
+
+Evaluation of the full 800-row extended set (models trained on the
+main-set 80% trainval split, 5 seeds):
+
+| model               | in-dist F1     | OOD F1         | Δ      |
+|---------------------|----------------|----------------|--------|
+| random_forest       | 0.971 ± 0.010  | 0.853 ± 0.012  | −0.118 |
+| xgboost             | 0.972 ± 0.003  | 0.838 ± 0.024  | −0.135 |
+| decision_tree       | 0.957 ± 0.009  | 0.831 ± 0.030  | −0.127 |
+| logistic_regression | 0.917 ± 0.013  | 0.784 ± 0.031  | −0.133 |
+
+Placed alongside the other two OOD axes: attack-type shift (−12 pts)
+is more damaging than network-size shift (12.A-4: −3 to −13 pts) but
+far milder than safety-bound violation (12.A-3: −35 pts). Notably,
+Logistic Regression loses its 12.A-4 robustness advantage here: its
+scale-invariance stems from ratio-normalised features, which helps
+under *scale* shift but not under *attack-semantics* shift — all four
+models degrade by a similar 12–14 points.
+
+Per-subtype detection rate (RF shown; other models similar unless
+noted), read against each subtype's true non-normal fraction:
+
+| subtype         | true non-normal | detection (RF) | verdict |
+|-----------------|-----------------|----------------|---------|
+| silent_all      | 72%             | 0.720          | perfect |
+| delay_gaussian  | 100%            | 1.000          | perfect |
+| delay_lognormal | 100%            | 1.000          | perfect |
+| forgery         | 100%            | 0.939          | good    |
+| silent_commit   | 43%             | 0.382          | partial |
+| silent_prepare  | 21%             | 0.206          | aligned |
+| replay_stale    | 99%             | **0.114**      | missed  |
+
+Observations:
+
+1. **silent_all is an embedded in-distribution control.** The main
+   training set's silent rounds use `silent_mode='all'`, so this
+   subtype is not OOD at all. Its perfect accuracy (1.000 for all
+   tree models) confirms the OOD degradation elsewhere is genuine
+   distribution shift, not a pipeline artefact.
+2. **Forgery transfers, contrary to prior expectation.** Detection is
+   0.87–0.94 across models. Mechanism: forgery injects an extra
+   spoofed message per intercepted send, perturbing per-node prepare
+   counts — the same `prepare_count_std` signature learned from
+   duplicate replay in training. Attacks sharing an observable
+   signature with a trained attack generalise.
+3. **replay_stale is missed almost entirely (85–89%)** — the headline
+   negative result; diagnosed below.
+4. Forgery `failure_recall` rests on 3 true-failure samples
+   (σ up to 0.28) and must be reported as unreliable
+   (support-limited), mirroring the 12.A-5 replay NaN treatment.
+
+## Phase 12.B: replay_stale Diagnosis — Neutralised, Not Undetected
+
+Feature-level comparison of replay_stale against the training
+distribution:
+
+| feature                  | replay (train, duplicate) | replay_stale (OOD) | normal (train) |
+|--------------------------|---------------------------|--------------------|----------------|
+| prepare_count_std        | 0.635                     | 0.293              | 0.252          |
+| voting_consistency       | 0.998                     | 0.983              | 0.995          |
+| consensus_agreement_time | 59.2                      | 69.0               | 67.8           |
+
+The attack demonstrably fires (`stale_replayed` ≈ 15 per round), but
+`STRICT_ROUND_VALIDATION=True` causes receivers to discard stale
+messages, so the duplicate-replay signature (`prepare_count_std`
+0.635) never forms — the feature vector is statistically adjacent to
+normal. The ground-truth label=1 comes from the simulator-side
+counter (`label_generator.py`: `stale_replayed > 0`), which is
+deliberately excluded from model features per the auxiliary-counter
+rule. The correct interpretation: **the protocol neutralises the
+attack before it can leave an observable consensus footprint; the
+model cannot detect what the permitted features do not encode.** This
+is the same philosophy as the 12.A-5 equivocation finding (attacks
+that fail to disrupt consensus are inherently silent) and directly
+motivates Phase 12.D (re-run with `STRICT_ROUND_VALIDATION=False`).
+
+## Phase 12.B: Confusion Matrix Quality
+
+Five-seed summed OOD confusion matrix, random_forest
+(rows = true, cols = predicted):
+
+|        | pred 0 | pred 1 | pred 2 |
+|--------|--------|--------|--------|
+| true 0 | 154    | 0      | 3      |
+| true 1 | 98     | 288    | 1      |
+| true 2 | 9      | 1      | 246    |
+
+1. Errors concentrate in a single cell: (true=1 → pred=0), 95–112
+   across models. replay_stale accounts for most of these misses;
+   LR's surplus comes from its weaker forgery and replay_stale
+   separation.
+2. The failure row holds: RF misses 10/256 label=2 samples
+   (recall ≈ 0.961); DT/XGB miss 27 and LR misses 35. The most safety-critical class
+   remains well covered under OOD.
+3. Classes 1 and 2 are almost never confused with each other
+   (≤ 17 counts per cell). The OOD failure mode is *missing the
+   attack entirely*, not misjudging its severity.
+4. False alarms on true normal reconfirm 12.A-5: LR highest
+   (21/157 ≈ 13%), XGB lowest (2/157 ≈ 1%).
+
+## Phase 12.B: Opt-in `train_on_extended=True`
+
+`scripts/advanced_fault.py --train-on-extended` concatenates a
+per-seed 80% split of the extended set into the trainval pool. For a
+fair A/B comparison both arms evaluate the *same* per-seed 20%
+extended holdout (160 rows, stratified by `fault_subtype`) — the
+headline 800-row numbers above therefore differ slightly (within
+noise) from the baseline arm below. Output files carry the
+`_trainext` suffix to avoid clobbering the baseline tables.
+
+| model               | in-dist F1 (base → ext) | ext-test F1 (base → ext) |
+|---------------------|--------------------------|--------------------------|
+| xgboost             | 0.972 → 0.963 (−0.010)   | 0.838 → 0.948 (+0.110)   |
+| random_forest       | 0.971 → 0.959 (−0.012)   | 0.853 → 0.922 (+0.069)   |
+| decision_tree       | 0.957 → 0.926 (−0.032)   | 0.831 → 0.927 (+0.097)   |
+| logistic_regression | 0.917 → 0.910 (−0.007)   | 0.784 → 0.868 (+0.084)   |
+
+1. **Exposure closes most of the OOD gap** (XGB recovers to 0.948),
+   but **in-distribution F1 drops for every model** — a label-noise
+   tax. The extended trainval contains ~80 replay_stale rows whose
+   features resemble normal but whose labels are degraded;
+   contradictory supervision degrades the main-set boundary. The
+   single decision tree pays most (−0.032), the linear model least
+   (−0.007). Extending the training distribution is a trade-off, not
+   a free improvement.
+2. **replay_stale detection after exposure: XGB 0.79, DT 0.73,
+   RF 0.54, LR 0.28.** This partially falsifies the "cannot learn
+   what features do not encode" prediction: mean-level feature
+   indistinguishability does not imply distribution-level
+   indistinguishability. A weak non-linear residue survives strict
+   validation, and tree models carve it out once supervised; the
+   linear model cannot. Mirror image of 12.A-4: LR's bluntness is
+   armour under scale shift, a liability here.
+3. silent_commit `failure_recall` reaches 1.000 for RF/XGB
+   (from 0.84/0.57): phase-targeted silence carries learnable signal
+   that training simply had not covered — the clean counterpoint to
+   replay_stale.
+
+### Files touched in this phase
+
+- `scripts/advanced_fault.py` (new — OOD evaluation + `--train-on-extended` opt-in)
+- `results/tables/ood_f1.csv`, `ood_per_subtype.csv`, `ood_confusion.csv`
+- `results/tables/ood_f1_trainext.csv`, `ood_per_subtype_trainext.csv`, `ood_confusion_trainext.csv`
