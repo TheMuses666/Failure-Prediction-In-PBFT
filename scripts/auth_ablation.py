@@ -70,7 +70,7 @@ def main():
             'voting_consistency_mean': df['voting_consistency'].mean(),
         })
 
-    output_path = DATA_RAW_DIR / 'auth_ablation.csv'
+    output_path = RESULTS_TABLES_DIR / 'auth_ablation.csv'
     pd.DataFrame(records).to_csv(output_path, index=False)
     print(pd.DataFrame(records).round(3).to_string(index=False))
 

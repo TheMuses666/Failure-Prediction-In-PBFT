@@ -667,8 +667,8 @@ Extended robustness dataset:
 
 Forgery sensitivity runs:
 
-- [ ] `fault_intensity in {0.2, 0.5, 1.0}`
-- [ ] used for Phase 12 authentication-ablation analysis
+- [x] `fault_intensity in {0.2, 0.5, 1.0}` (`data/raw/forgery_i{20,50,100}.csv`)
+- [x] used for Phase 12 authentication-ablation analysis
 
 Config split:
 
@@ -1276,10 +1276,10 @@ project-management evidence ready to be reused in the final report.
 
 ### 12.C Authentication Ablation
 
-- [ ] Evaluate forgery as an authentication-ablation scenario
-- [ ] Compare `fault_intensity in {0.2, 0.5, 1.0}`
-- [ ] Report whether forged votes alter quorum timing or label distribution
-- [ ] Clearly state that production PBFT normally relies on authenticated messages
+- [x] Evaluate forgery as an authentication-ablation scenario
+- [x] Compare `fault_intensity in {0.2, 0.5, 1.0}`
+- [x] Report whether forged votes alter quorum timing or label distribution — quorum timing: yes (agreement_time 67.8 → 59.2 ms, monotone); label distribution: saturated at i0.2 (existence rule `forged > 0`), see notes/phase12.md
+- [x] Clearly state that production PBFT normally relies on authenticated messages
 
 ### 12.D Strict-Round-Validation Ablation
 
