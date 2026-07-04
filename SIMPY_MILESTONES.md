@@ -27,6 +27,7 @@ Phase 10 -> Baseline comparison
 Phase 11 -> Rigorous training (CV + tuning + multi-seed)
 Phase 11b -> Lightweight model baseline (Logistic Regression)
 Phase 12 -> Research-quality experiments
+Phase 12.E -> Optional mixed-N training
 ```
 
 ---
@@ -1287,6 +1288,83 @@ project-management evidence ready to be reused in the final report.
 - [x] Run stale replay with `STRICT_ROUND_VALIDATION=False`
 - [x] Compare quorum behaviour, labels, and replay counters
 - [x] Report whether stale replay becomes harmful only under the weakened validation setting
+
+### 12.E Optional Mixed-N Training
+
+**Goal:** Test whether exposing the model to multiple network sizes and
+Byzantine node counts at a controlled PBFT-safe ratio improves
+generalisation compared with training only on the original `N=7, f=2`
+main dataset.
+
+**Motivation:** Phase 12.B tests exposure to new attack types
+(`train_on_extended=True`). Phase 12.E mirrors that idea for network
+configuration diversity: exposure to larger `N` settings may make the
+classifier more robust to scale shift.
+
+**Scope rule:** Keep Phase 12.E within PBFT's normal safety envelope and
+preserve the Phase 12.A-4 design discipline: vary network size while
+holding the Byzantine ratio near the PBFT bound. Do not mix a full
+two-axis `(N, f)` grid into this phase. Mixed `f` ratios and
+out-of-bound settings such as `N=7, f=3` change the monitoring question
+from "scale generalisation" to "attack-concentration and protocol-bound
+stress testing"; they remain future work.
+
+**Candidate configurations:**
+
+```text
+N=7,  f=2  (main dataset trainval)
+N=10, f=3  (matches Phase 12.A-4 scalability test config)
+N=13, f=4  (matches Phase 12.A-4 scalability test config)
+```
+
+**Tasks:**
+
+- [ ] Generate N=10 and N=13 training pools with the same fault taxonomy
+      and composition as the scalability test sets, using a dedicated
+      `MIXED_N_TRAIN_SEED` (deterministic simulator: reusing the test
+      seed would clone the test sets into training data)
+- [ ] Verify zero feature-row overlap between each training pool and its
+      same-N test set
+- [ ] Train the default model family under two arms per seed: baseline
+      (`N=7` trainval only) and mixed (`N=7 + N=10 + N=13` pools)
+- [ ] Evaluate both arms on the same three test sets: `N=7` 20% holdout,
+      `scalability_n10.csv`, and `scalability_n13.csv` (5 seeds,
+      protocol identical to Phase 12.A-3/4/5, 12.B, 12.C, and 12.D)
+- [ ] Report whether mixed exposure improves scale generalisation or
+      creates a trade-off with in-distribution performance
+- [ ] Document the data-size confound: the mixed arm trains on roughly
+      3x rows; this follows the add-data framing used in Phase 12.B,
+      while a size-matched control remains an optional follow-up
+- [ ] Include the three static baselines in both arms: threshold_based
+      and count_based are refit per arm (their fitted thresholds are
+      N=7-anchored in the baseline arm, mixed-anchored in the mixed
+      arm); rule_based uses config constants only and is identical
+      across arms (arm-invariant control)
+
+**Suggested outputs:**
+
+```text
+data/raw/mixed_n_train_n10.csv
+data/raw/mixed_n_train_n13.csv
+results/tables/mixed_n_curve.csv
+results/figures/mixed_n_curve.png
+```
+
+**Pass Criteria:**
+
+- [ ] Baseline-arm F1 reproduces `scalability_curve.csv` bit-for-bit
+      (pipeline anchor)
+- [ ] Training pools are verified leak-free against test sets
+- [ ] Results state whether the Phase 12.A-4 tree-model degradation is
+      curable by exposure (data-coverage problem) or persists
+      (architectural), and what this means for the LR-vs-trees
+      deployment discussion
+- [ ] Report clearly separates within-bound mixed-N training from
+      out-of-bound (`f > floor((N-1)/3)`) stress testing and two-axis
+      `(N, f)` grids, which remain future work
+- [ ] The static tier separates fitted-threshold detectors from
+      constant/ratio-based rules across N, testing the 12.A-4
+      "memorised N=7-anchored thresholds" diagnosis
 
 ### Outputs
 
