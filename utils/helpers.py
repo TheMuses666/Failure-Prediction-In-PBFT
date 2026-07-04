@@ -25,7 +25,7 @@ from baseline.static_detection import (fit_threshold, BaselineWrapper, threshold
 
 @contextmanager
 def live_timer(label):
-    """实时秒表:with live_timer('xxx'): 期间每秒刷新 'xxx ... Ns'。"""
+    """Live elapsed timer: refreshes '<label> ... Ns' every second inside the with-block."""
     stop = threading.Event()
     t0 = time.perf_counter()
 

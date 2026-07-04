@@ -12,7 +12,7 @@ rows = []
 def process(raws, fault_type):
     for raw in tqdm(raws, desc=f'snapshots {fault_type}', leave=False):
         rr = build_round_result(raw)
-        # label：整轮特征，只算一次
+        # Label from full-round features, computed once per round
         label = generate_label(rr, extract_features(rr))
         for cutoff in CUTOFFS_MS:
             feats = compute_features_at_time(rr, cutoff)
@@ -20,7 +20,7 @@ def process(raws, fault_type):
                 'round_uid': f'{fault_type}_{rr["round_id"]}',
                 'fault_type': fault_type,
                 'cutoff': cutoff,
-                **feats,          # 13 个特征
+                **feats,          # the 13 features
                 'label': label,
             })
 
@@ -36,7 +36,7 @@ def main():
             )
         process(raws, fault_type)
 
-    # 加 normal rounds 用于 false alarm 检查
+    # Normal rounds for the false-alarm check
     with live_timer(f'simulating {NORMAL_ROUNDS} normal rounds'):
         raws_normal = run_pbft_simulation(
             n_rounds=NORMAL_ROUNDS,

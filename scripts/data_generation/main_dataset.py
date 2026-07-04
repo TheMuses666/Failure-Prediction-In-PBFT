@@ -38,7 +38,7 @@ def main():
     print("fault_type distribution:", Counter(r['fault_type'] for r in rows))
     print("unique round_ids:", len(set(r['round_id'] for r in rows)))
 
-    DATA_RAW_DIR.mkdir(parents=True, exist_ok=True)  # 确保 data/raw/ 文件夹存在
+    DATA_RAW_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows)
     df.to_csv(RAW_DATA_FILE, index=False)
     print(f"saved {len(df)} rows to {RAW_DATA_FILE}")

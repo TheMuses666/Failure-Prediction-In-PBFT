@@ -163,8 +163,8 @@ PARAM_GRIDS = {
 }
 
 
-# Phase 7 写 CSV 之前调用一次，确保 extract_features 的 keys
-# 跟 FEATURE_COLUMNS + AUXILIARY_COLUMNS 完全对得上。
+# Called once before Phase 7 writes the CSV: asserts that the keys produced by
+# extract_features match FEATURE_COLUMNS + AUXILIARY_COLUMNS exactly.
 def assert_feature_schema(feature_dict: dict) -> None:
     expected = set(FEATURE_COLUMNS_EXTEND) | set(AUXILIARY_COLUMNS)
     actual = set(feature_dict.keys())

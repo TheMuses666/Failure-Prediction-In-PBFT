@@ -132,8 +132,8 @@ def extract_features(round_result: dict) ->dict:
 
 def compute_features_at_time(round_result: dict, cutoff_ms: float) -> dict:
     """
-    重算所有 13 个特征，只使用 t <= cutoff_ms 时可获得的信息。
-    如果 cutoff_ms >= 整个轮次结束，等价于 extract_features(round_result)。
+    Recompute all 13 features using only information available at t <= cutoff_ms.
+    With cutoff_ms >= end of round this is equivalent to extract_features(round_result).
     """
     paired = list(zip(round_result['delivery_times'], round_result['latencies']))
     filtered_latencies = [lat for dt, lat in paired if dt <= cutoff_ms]
@@ -162,7 +162,6 @@ def compute_features_at_time(round_result: dict, cutoff_ms: float) -> dict:
     propagation_pattern = float(np.std(filtered_delivery_times)) if filtered_delivery_times else 0.0
     
     # Consensus Agreement Time
-    # 特征 4: consensus_agreement_time
     end_t = round_result['consensus_end_time']
     if end_t is not None and end_t <= cutoff_ms:
         effective_end = end_t
@@ -188,7 +187,7 @@ def compute_features_at_time(round_result: dict, cutoff_ms: float) -> dict:
 
     # Response Time
     first_arrival_nodes = {}
-    for m in prepare_msgs:    # ← 唯一改动：用 filtered 的 list
+    for m in prepare_msgs:    # only change vs extract_features: the cutoff-filtered list
         if m.sender_id not in first_arrival_nodes or m.delivery_time < first_arrival_nodes[m.sender_id]:
             first_arrival_nodes[m.sender_id] = m.delivery_time
 
@@ -222,13 +221,14 @@ def compute_features_at_time(round_result: dict, cutoff_ms: float) -> dict:
     # Vote Deviation
 
     if cutoff_ms >= CONSENSUS_TIMEOUT_MS:
-      # 轮次已完成，直接用记录的 per_node_commit_log（包含 silent 节点的本地 self-vote）
+      # Round finished: use the recorded per_node_commit_log
+      # (includes silent nodes' local self-votes)
       commit_counts_per_node = []
       for log in round_result['per_node_commit_log']:
           total_votes = sum(len(senders) for senders in log.values())
           commit_counts_per_node.append(total_votes)
     else:
-       # cutoff 在轮次进行中——从 commit_msgs 反推（近似）
+       # Cutoff mid-round: reconstruct (approximately) from commit_msgs
        per_node_log_at_cutoff = defaultdict(lambda: defaultdict(set))
        for m in commit_msgs:
            per_node_log_at_cutoff[m.receiver_id][m.content].add(m.sender_id)
@@ -247,7 +247,7 @@ def compute_features_at_time(round_result: dict, cutoff_ms: float) -> dict:
 
     # Prepare Count STD
     prepare_count = Counter()
-    for m in prepare_msgs:   # ← 唯一改动
+    for m in prepare_msgs:   # cutoff-filtered list, as in response_time
         prepare_count[m.receiver_id] += 1
     for nid in range(round_result['total_nodes']):
       if nid not in prepare_count:

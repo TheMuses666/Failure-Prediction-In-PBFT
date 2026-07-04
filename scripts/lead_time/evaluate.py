@@ -14,7 +14,7 @@ def main():
     df = pd.read_csv(DATA_RAW_DIR / 'lead_time_snapshots.csv')
     print(f'Loaded {len(df)} snapshot rows, {df["round_uid"].nunique()} rounds')
 
-    # 每轮一个 label（6 行相同，取 first）
+    # One label per round (all 6 cutoff rows carry the same label; take the first)
     round_labels = df.groupby('round_uid')[TARGET_COLUMN].first()
 
     # ═══════════════════════════════════════════════════════════
@@ -49,16 +49,17 @@ def main():
     # ═══════════════════════════════════════════════════════════
     fail = pred_df[pred_df[TARGET_COLUMN] == 2]
 
-    # 基准索引：每个 (seed, model, failure round) 一行
+    # Base index: one row per (seed, model, failure round)
     base = (fail[['seed', 'model', 'round_uid', 'fault_type']]
             .drop_duplicates()
             .set_index(['seed', 'model', 'round_uid']))
 
-    # 最早预测出 label=2 的 cutoff；从未报警的轮不在这个 Series 里
+    # Earliest cutoff at which the model predicts label=2;
+    # rounds that never alarm are absent from this Series
     earliest_alarm = (fail[fail['pred'] == 2]
                       .groupby(['seed', 'model', 'round_uid'])['cutoff'].min())
 
-    base['alarm_cutoff'] = earliest_alarm          # 按索引对齐，miss 处为 NaN
+    base['alarm_cutoff'] = earliest_alarm          # aligned on index; NaN where missed
     base['detected'] = base['alarm_cutoff'].notna().astype(int)
     base['lead_time_ms'] = (CONSENSUS_TIMEOUT_MS - base['alarm_cutoff']).fillna(0)
     raw = base.reset_index()
@@ -91,7 +92,7 @@ def main():
     normal = pred_df[pred_df['fault_type'] == 'normal'].copy()
     normal['pred_failure'] = (normal['pred'] == 2).astype(int)
 
-    # 先按 seed 算每次实验的 FAR，再跨 seed 聚合出 mean/std（供画图的阴影带用）
+    # FAR per seed first, then mean/std across seeds (feeds the shaded band in the plot)
     per_seed = (normal.groupby(['model', 'cutoff', 'seed'])['pred_failure']
                 .mean().reset_index()
                 .rename(columns={'pred_failure': 'false_alarm_rate'}))

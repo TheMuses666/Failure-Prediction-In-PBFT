@@ -81,11 +81,11 @@ if __name__ == '__main__':
     for i, (p, e) in enumerate(zip(preds, expected)):
         print(f"row {i}: pred={p}  expected={e}")
     X_test_rule = pd.DataFrame({
-        "message_latency":      [20,  60,  20,  20,  20],   # 第1行 >= 50 → degraded
+        "message_latency":      [20,  60,  20,  20,  20],   # row 1 >= 50 -> degraded
         "timeout_frequency":    [0,   0,   0,   0,   0],
-        "voting_consistency":   [1.0, 1.0, 0.5, 1.0, 1.0],  # 第2行 < QUORUM → failure
-        "message_drop_rate":    [0,   0,   0,   0.5, 0],    # 第3行 >= 0.3 → degraded
-        "message_consistency":  [1.0, 1.0, 1.0, 1.0, 0.5],  # 第4行 < 0.8 → degraded
+        "voting_consistency":   [1.0, 1.0, 0.5, 1.0, 1.0],  # row 2 < QUORUM -> failure
+        "message_drop_rate":    [0,   0,   0,   0.5, 0],    # row 3 >= 0.3 -> degraded
+        "message_consistency":  [1.0, 1.0, 1.0, 1.0, 0.5],  # row 4 < 0.8 -> degraded
         "consensus_agreement_time": [30, 60, 30, 30, 30],
     })
     preds_rule = rule_based_detector(X_test_rule)

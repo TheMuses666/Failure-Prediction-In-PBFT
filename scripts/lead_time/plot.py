@@ -12,7 +12,7 @@ MARKERS = {
 
 
 def main():
-    # 图 1：FAR 随 cutoff 的曲线（normal 轮误报率）
+    # Figure 1: false alarm rate vs cutoff (normal rounds)
     fa = pd.read_csv(RESULTS_TABLES_DIR / 'lead_time_false_alarm.csv')
     plot_grouped_curve(
         df=fa,
@@ -29,7 +29,7 @@ def main():
         markers=MARKERS,
     )
 
-    # 图 2：lead time 按 (fault_type, model) 的柱状图
+    # Figure 2: lead time bars per (fault_type, model)
     lt = pd.read_csv(RESULTS_TABLES_DIR / 'lead_time_summary.csv')
     plot_grouped_bar(
         df=lt,

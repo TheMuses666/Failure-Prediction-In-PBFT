@@ -153,7 +153,6 @@ def plot_grouped_bar(
     for i, group_name in enumerate(groups):
         offsets = x_positions + (i - n_groups/2 + 0.5) * bar_width
         
-        # 从 df 拿该 group 每个 x 的值
         means, stds = [], []
         for xc in x_categories:
             row = df_plot[(df_plot[group_col] == group_name) & (df_plot[x_col] == xc)]
