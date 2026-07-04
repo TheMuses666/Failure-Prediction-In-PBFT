@@ -7,7 +7,6 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent
 
 DATA_RAW_DIR = ROOT_DIR / 'data' / 'raw'
-DATA_PROCESSED_DIR = ROOT_DIR / 'data' / 'processed'
 RESULTS_FIGURES_DIR = ROOT_DIR / 'results' / 'figures'
 RESULTS_TABLES_DIR = ROOT_DIR / 'results' / 'tables'
 RESULTS_MODELS_DIR = ROOT_DIR / 'results' / 'models'
@@ -121,7 +120,6 @@ BYZANTINE_DELAY_MS = 300
 # =========================
 
 RAW_DATA_FILE = DATA_RAW_DIR / "consensus_data.csv"
-PROCESSED_DATA_FILE = DATA_PROCESSED_DIR/ "processed_consensus_data.csv"
 
 METRICS_FILE = RESULTS_TABLES_DIR / "model_metrics.csv"
 
