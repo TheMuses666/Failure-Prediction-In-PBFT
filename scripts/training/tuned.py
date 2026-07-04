@@ -13,6 +13,7 @@ from ml.models.random_forest import build_random_forest
 from ml.models.decision_tree import build_decision_tree
 from ml.models.xgboost_model import build_xgboost
 from config import RANDOM_SEED, RANDOM_SEEDS, PARAM_GRIDS, RESULTS_MODELS_DIR, RAW_DATA_FILE, RESULTS_TABLES_DIR
+from utils.helpers import live_timer
 
 def make_pipeline(estimator):
     return Pipeline([
@@ -52,14 +53,14 @@ def main():
         ]
 
         for name, estimator, grid in candidates:
-            print(f"Tuning {name}...")
             pipe = make_pipeline(estimator)
             prefixed_grid = prefix_grid(grid)
             sw = sample_weight if name == 'xgboost' else None
 
-            best_model, best_params, cv_results = tune_model(
-                pipe, prefixed_grid, X_trainval, y_trainval, seed=seed, sample_weight=sw, sample_weight_param='clf__sample_weight'
-            )
+            with live_timer(f'seed {seed} | GridSearch {name}'):
+                best_model, best_params, cv_results = tune_model(
+                    pipe, prefixed_grid, X_trainval, y_trainval, seed=seed, sample_weight=sw, sample_weight_param='clf__sample_weight'
+                )
             test_metrics = model_evaluation(best_model, X_test, y_test, model_name=name)
             clean_params = strip_prefix(best_params)
             print(f"  best_params: {clean_params}")

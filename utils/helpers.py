@@ -2,6 +2,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.metrics import classification_report
+from tqdm import tqdm
+import threading, time
+from contextlib import contextmanager
 
 from config import RAW_DATA_FILE, RANDOM_SEEDS, TARGET_COLUMN,assert_feature_schema, FEATURE_COLUMNS_EXTEND
 from ml.models.decision_tree import build_decision_tree
@@ -19,6 +22,28 @@ from baseline.static_detection import (fit_threshold, BaselineWrapper, threshold
                                        rule_based_detector, fit_count_threshold,
                                        count_based_detector)
 
+
+@contextmanager
+def live_timer(label):
+    """实时秒表:with live_timer('xxx'): 期间每秒刷新 'xxx ... Ns'。"""
+    stop = threading.Event()
+    t0 = time.perf_counter()
+
+    def _tick():
+        while not stop.is_set():
+            print(f'\r{label} ... {time.perf_counter() - t0:.0f}s', end='', flush=True)
+            stop.wait(1)
+
+    ticker = threading.Thread(target=_tick, daemon=True)
+    ticker.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        ticker.join()
+        print(f'\r{label} done in {time.perf_counter() - t0:.1f}s   ')
+
+
 def make_pipeline(estimator):
     """Wrap a model with MinMax scaling using the shared pipeline format."""
     return Pipeline([('scaler', MinMaxScaler()), ('clf', estimator)])
@@ -34,7 +59,7 @@ def train_default_pipeline_multiseed(
     records = []
     per_class_records = []
 
-    for seed in seeds:
+    for seed in tqdm(seeds, desc='seeds'):
         X_trainval, X_test, y_trainval, y_test = split_fuc(
             feature_cols = feature_cols, target_cols = label_col,csv_path = csv_path, seed=seed
         )
@@ -84,15 +109,16 @@ def build_and_fit_all_candidates(seed, X_tv, y_tv):
 
 def collect_rows(start_id, n_rounds, fault_type, byz_ids, fault_subtype='base', **sim_kwargs):
     """Run PBFT simulation rounds and convert raw outputs into dataset rows."""
-    raws = run_pbft_simulation(
-        start_round=start_id,
-        fault_type=fault_type,
-        byzantine_node_ids=byz_ids,
-        n_rounds=n_rounds,
-        **sim_kwargs
-    )
+    with live_timer(f'simulating {n_rounds} {fault_type} ({fault_subtype}) rounds'):
+        raws = run_pbft_simulation(
+            start_round=start_id,
+            fault_type=fault_type,
+            byzantine_node_ids=byz_ids,
+            n_rounds=n_rounds,
+            **sim_kwargs
+        )
     rows_chunk = []
-    for raw in raws:
+    for raw in tqdm(raws, desc=f'features {fault_type}', leave=False):
         rr = build_round_result(raw)
         features = extract_features(rr)
         assert_feature_schema(features)
@@ -120,7 +146,7 @@ def run_ood_detection(
     subtypes = sorted(df_ood[group_col].unique())
 
     records = []
-    for seed in seeds:
+    for seed in tqdm(seeds,desc='seeds'):
         X_tv, X_test, y_tv, y_test = load_and_split_trainval_ext(
             feature_cols=FEATURE_COLUMNS_EXTEND, csv_path=train_csv, seed=seed)
         candidates = build_and_fit_all_candidates(seed, X_tv, y_tv)
