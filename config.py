@@ -134,6 +134,7 @@ ROBUSTNESS_BYZANTINE_COUNTS = [1, 3]
 BZY_ID_SCALABILITY = {10: [7,8,9],13:[9,10,11,12]}
 CUTOFFS_MS = [25, 50, 75, 100, 125, 150]
 FORGERY_INTENSITIES = [0.2, 0.5, 1.0]
+STRICT_SCENARIOS = [('strict_on', True), ('strict_off', False)]
 
 # =========================
 # ML Hyperparameter Search Space (Phase 11)

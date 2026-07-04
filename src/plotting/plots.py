@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 import numpy as np
-import pandas as pd
 
 def plot_feature_distribution_by_group(df, feature_cols, group_cols, out_path, title=None):
 
@@ -176,7 +175,7 @@ def plot_grouped_bar(
         ax.set_ylim(y_lim)
     if title:
         ax.set_title(title)
-    ax.legend(loc='lower left')
+    ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
     ax.grid(True, alpha=0.3, axis='y')
     
     out_path.parent.mkdir(parents=True, exist_ok=True)

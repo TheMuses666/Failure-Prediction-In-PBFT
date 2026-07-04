@@ -30,12 +30,16 @@ class Node:
         is_byzantine: bool = False,
         fault_type: str | None = None,
         total_nodes: int = NUM_NODES,
+        current_round: int | None = None,
+        strict_round_validation: bool = True,
     ):
         # --- identity ---
         self.node_id = node_id
         self.network = network
         self.is_byzantine = is_byzantine
         self.fault_type = fault_type            # Set by Phase 4 fault injector; None for honest nodes.
+        self.current_round = current_round
+        self.strict_round_validation = strict_round_validation
 
         # --- protocol constants ---
         # PBFT tolerates up to f Byzantine nodes when n >= 3f + 1.
@@ -85,6 +89,8 @@ class Node:
 
     def receive(self, msg: Message) -> None:
         """Entry point called by SimPyNetwork._deliver. Plain method (no yield)."""
+        if (not self.strict_round_validation and self.current_round is not None and msg.round_id != self.current_round):
+            msg.round_id =self.current_round
         self.received_messages[msg.round_id].append(msg)
         if msg.message_type == 'pre_prepare':
             self._handle_pre_prepare(msg)

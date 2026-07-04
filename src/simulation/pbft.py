@@ -45,6 +45,7 @@ def run_pbft_round(
         # Replay fault related arguments
         replay_mode: str = 'duplicate',
         replay_buffer_size: int = 16,
+        strict_round_validation: bool = STRICT_ROUND_VALIDATION,
 
         injector: FaultInjector | None=None,
         
@@ -80,7 +81,9 @@ def run_pbft_round(
             network=net,
             is_byzantine=is_byz,
             fault_type=fault_type if is_byz else None,
-            total_nodes=total_nodes
+            total_nodes=total_nodes,
+            current_round=round_id,
+            strict_round_validation = strict_round_validation
         )
         nodes.append(n)
         net.register_node(n)
@@ -124,7 +127,7 @@ def run_pbft_round(
         'simulation_end_time': env.now,
         'committed_nodes_count': len(committed_nodes_set),
         'committed_node_ids': sorted(committed_nodes_set),
-        'strict_round_validation': STRICT_ROUND_VALIDATION,
+        'strict_round_validation': strict_round_validation,
         '_nodes': nodes,
         '_network': net,
     }
@@ -146,6 +149,7 @@ def run_pbft_simulation(
         replay_buffer_size: int = 16,
         start_round: int = 1,
         fault_intensity: float = 1.0,
+        strict_round_validation: bool = STRICT_ROUND_VALIDATION,
 ) -> list[dict]:
     """
     Run n_rounds consecutive PBFT rounds with ONE persistent FaultInjector.
@@ -181,6 +185,7 @@ def run_pbft_simulation(
             timeout_ms=timeout_ms,
             seed=seed+i,
             injector=injector,
+            strict_round_validation = strict_round_validation,
         ))
     
     return results

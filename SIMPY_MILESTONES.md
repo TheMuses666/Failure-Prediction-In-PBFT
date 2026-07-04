@@ -1283,10 +1283,10 @@ project-management evidence ready to be reused in the final report.
 
 ### 12.D Strict-Round-Validation Ablation
 
-- [ ] Run stale replay with `STRICT_ROUND_VALIDATION=True`
-- [ ] Run stale replay with `STRICT_ROUND_VALIDATION=False`
-- [ ] Compare quorum behaviour, labels, and replay counters
-- [ ] Report whether stale replay becomes harmful only under the weakened validation setting
+- [x] Run stale replay with `STRICT_ROUND_VALIDATION=True`
+- [x] Run stale replay with `STRICT_ROUND_VALIDATION=False`
+- [x] Compare quorum behaviour, labels, and replay counters
+- [x] Report whether stale replay becomes harmful only under the weakened validation setting
 
 ### Outputs
 
