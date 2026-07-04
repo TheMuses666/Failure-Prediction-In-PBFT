@@ -80,7 +80,8 @@ def plot_grouped_curve(
     vline_label=None,      
     x_ticks=None,         
     y_lim=(0.5, 1.0),
-    markers=None,         
+    markers=None, 
+    legend_outside=False,        
 ):
     fig, ax = plt.subplots(figsize=(7, 5))
     
@@ -110,7 +111,10 @@ def plot_grouped_curve(
     ax.set_ylabel(y_label)
     ax.set_ylim(y_lim)
     ax.grid(True, alpha=0.3)
-    ax.legend(loc='lower left')
+    if legend_outside:
+        ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
+    else:
+        ax.legend(loc='lower left')
     if title:
         ax.set_title(title)
     

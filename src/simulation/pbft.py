@@ -47,6 +47,7 @@ def run_pbft_round(
         replay_buffer_size: int = 16,
 
         injector: FaultInjector | None=None,
+        
 
 ) -> dict:
     
@@ -144,6 +145,7 @@ def run_pbft_simulation(
         replay_mode: str = 'duplicate',
         replay_buffer_size: int = 16,
         start_round: int = 1,
+        fault_intensity: float = 1.0,
 ) -> list[dict]:
     """
     Run n_rounds consecutive PBFT rounds with ONE persistent FaultInjector.
@@ -165,6 +167,7 @@ def run_pbft_simulation(
         delay_distribution=delay_distribution,
         replay_mode=replay_mode,
         replay_buffer_size=replay_buffer_size,
+        fault_intensity=fault_intensity
     )        
 
     results = []

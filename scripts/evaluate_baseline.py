@@ -1,16 +1,10 @@
-from baseline.static_detection import threshold_detector,fit_threshold, rule_based_detector
+from baseline.static_detection import threshold_detector,fit_threshold, rule_based_detector, BaselineWrapper
 import pandas as pd
 from ml.preprocessing import load_and_split_trainval_raw
 from ml.evaluation import model_evaluation
 from sklearn.metrics import classification_report
 from config import RAW_DATA_FILE, RANDOM_SEEDS, RESULTS_TABLES_DIR
 
-
-class BaselineWrapper:
-    def __init__(self,baseline_fn):
-        self.baseline_fn = baseline_fn
-    def predict(self, X):
-        return self.baseline_fn(X)
     
 
 def main():

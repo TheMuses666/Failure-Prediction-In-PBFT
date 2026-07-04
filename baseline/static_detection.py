@@ -8,6 +8,12 @@ from config import (LABEL_NORMAL, LABEL_DEGRADED, LABEL_FAILURE, FEATURE_COLUMNS
                 )
 import pandas as pd
 
+class BaselineWrapper:
+    def __init__(self,baseline_fn):
+        self.baseline_fn = baseline_fn
+    def predict(self, X):
+        return self.baseline_fn(X)
+    
 
 def fit_threshold(X_train_raw: pd.DataFrame, y_train: pd.Series) -> dict:
     normal_agreement = X_train_raw.loc[y_train == LABEL_NORMAL,'consensus_agreement_time' ]
@@ -84,3 +90,18 @@ if __name__ == '__main__':
     })
     preds_rule = rule_based_detector(X_test_rule)
     print("rule preds:", preds_rule, "expected: [0, 1, 2, 1, 1]")
+
+
+def fit_count_threshold(X_train_raw: pd.DataFrame, y_train: pd.Series) -> dict:
+    normal_counts = X_train_raw.loc[y_train == LABEL_NORMAL, 'prepare_count_std']
+    return {'degraded': normal_counts.mean() + 3 * normal_counts.std()}
+
+
+def count_based_detector(X_test_raw: pd.DataFrame, thresholds: dict) -> np.ndarray:
+    preds = []
+    for _, row in X_test_raw.iterrows():
+        if row['prepare_count_std'] > thresholds['degraded']:
+            preds.append(LABEL_DEGRADED)
+        else:
+            preds.append(LABEL_NORMAL)
+    return np.array(preds)
