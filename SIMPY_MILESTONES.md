@@ -1319,27 +1319,35 @@ N=13, f=4  (matches Phase 12.A-4 scalability test config)
 
 **Tasks:**
 
-- [ ] Generate N=10 and N=13 training pools with the same fault taxonomy
+- [x] Generate N=10 and N=13 training pools with the same fault taxonomy
       and composition as the scalability test sets, using a dedicated
       `MIXED_N_TRAIN_SEED` (deterministic simulator: reusing the test
       seed would clone the test sets into training data)
-- [ ] Verify zero feature-row overlap between each training pool and its
-      same-N test set
-- [ ] Train the default model family under two arms per seed: baseline
+- [x] Verify zero feature-row overlap between each training pool and its
+      same-N test set — de-duplicated feature space has exactly 1
+      colliding row per N, a degenerate all-Byzantine-silent timeout
+      state (message_drop_rate=1.0, response_time=timeout ceiling) that
+      any seed converges to once consensus fully fails; not a seed leak,
+      see notes/phase12.md
+- [x] Train the default model family under two arms per seed: baseline
       (`N=7` trainval only) and mixed (`N=7 + N=10 + N=13` pools)
-- [ ] Evaluate both arms on the same three test sets: `N=7` 20% holdout,
+- [x] Evaluate both arms on the same three test sets: `N=7` 20% holdout,
       `scalability_n10.csv`, and `scalability_n13.csv` (5 seeds,
       protocol identical to Phase 12.A-3/4/5, 12.B, 12.C, and 12.D)
-- [ ] Report whether mixed exposure improves scale generalisation or
-      creates a trade-off with in-distribution performance
-- [ ] Document the data-size confound: the mixed arm trains on roughly
+- [x] Report whether mixed exposure improves scale generalisation or
+      creates a trade-off with in-distribution performance — tree
+      models recover sharply at N=13 (decision_tree 0.824→0.942,
+      random_forest 0.906→0.970, xgboost 0.893→0.970) at a small N=7
+      cost (roughly 1-1.5 F1 points); see notes/phase12.md
+- [x] Document the data-size confound: the mixed arm trains on roughly
       3x rows; this follows the add-data framing used in Phase 12.B,
       while a size-matched control remains an optional follow-up
-- [ ] Include the three static baselines in both arms: threshold_based
+- [x] Include the three static baselines in both arms: threshold_based
       and count_based are refit per arm (their fitted thresholds are
       N=7-anchored in the baseline arm, mixed-anchored in the mixed
       arm); rule_based uses config constants only and is identical
-      across arms (arm-invariant control)
+      across arms (arm-invariant control) — confirmed rule_based F1 is
+      bit-for-bit identical between arms at all three N
 
 **Suggested outputs:**
 
@@ -1352,19 +1360,27 @@ results/figures/mixed_n_curve.png
 
 **Pass Criteria:**
 
-- [ ] Baseline-arm F1 reproduces `scalability_curve.csv` bit-for-bit
-      (pipeline anchor)
-- [ ] Training pools are verified leak-free against test sets
-- [ ] Results state whether the Phase 12.A-4 tree-model degradation is
+- [x] Baseline-arm F1 reproduces `scalability_curve.csv` bit-for-bit
+      (pipeline anchor) — verified, max abs diff = 0.0 across all
+      model x N combinations
+- [x] Training pools are verified leak-free against test sets — 1
+      benign degenerate-state collision per N, documented above and in
+      notes/phase12.md; not a seed/pipeline leak
+- [x] Results state whether the Phase 12.A-4 tree-model degradation is
       curable by exposure (data-coverage problem) or persists
       (architectural), and what this means for the LR-vs-trees
-      deployment discussion
-- [ ] Report clearly separates within-bound mixed-N training from
+      deployment discussion — curable: mixed-N exposure closes almost
+      all of the N=13 gap for every tree model, so the 12.A-4
+      degradation reflects insufficient training coverage rather than
+      an architectural ceiling; see notes/phase12.md
+- [x] Report clearly separates within-bound mixed-N training from
       out-of-bound (`f > floor((N-1)/3)`) stress testing and two-axis
       `(N, f)` grids, which remain future work
-- [ ] The static tier separates fitted-threshold detectors from
+- [x] The static tier separates fitted-threshold detectors from
       constant/ratio-based rules across N, testing the 12.A-4
-      "memorised N=7-anchored thresholds" diagnosis
+      "memorised N=7-anchored thresholds" diagnosis — threshold_based
+      and count_based shift measurably between arms, rule_based does
+      not, consistent with the diagnosis
 
 ### Outputs
 

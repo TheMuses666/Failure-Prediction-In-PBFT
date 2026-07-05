@@ -32,6 +32,7 @@ TOTAL_SIMULATION_ROUNDS = ROUNDS_PER_FAULT * len(FAULT_TYPES) + NORMAL_ROUNDS
 
 RANDOM_SEED = 42
 RANDOM_SEEDS = [42, 31,8,66,2]
+MIXED_N_TRAIN_SEED = 1024
 
 STRICT_ROUND_VALIDATION = True
 
@@ -133,6 +134,7 @@ BZY_ID_SCALABILITY = {10: [7,8,9],13:[9,10,11,12]}
 CUTOFFS_MS = [25, 50, 75, 100, 125, 150]
 FORGERY_INTENSITIES = [0.2, 0.5, 1.0]
 STRICT_SCENARIOS = [('strict_on', True), ('strict_off', False)]
+
 
 # =========================
 # ML Hyperparameter Search Space (Phase 11)
