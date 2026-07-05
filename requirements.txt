@@ -8,3 +8,5 @@ seaborn
 joblib
 simpy
 tqdm
+torch 
+torch_geometric

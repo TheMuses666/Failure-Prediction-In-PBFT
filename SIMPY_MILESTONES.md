@@ -28,6 +28,8 @@ Phase 11 -> Rigorous training (CV + tuning + multi-seed)
 Phase 11b -> Lightweight model baseline (Logistic Regression)
 Phase 12 -> Research-quality experiments
 Phase 12.E -> Optional mixed-N training
+Phase 13 -> Future work: graph neural network monitor
+Phase 14 -> Future work: temporal BiLSTM monitor
 ```
 
 ---
@@ -1323,9 +1325,9 @@ N=13, f=4  (matches Phase 12.A-4 scalability test config)
       and composition as the scalability test sets, using a dedicated
       `MIXED_N_TRAIN_SEED` (deterministic simulator: reusing the test
       seed would clone the test sets into training data)
-- [x] Verify zero feature-row overlap between each training pool and its
-      same-N test set — de-duplicated feature space has exactly 1
-      colliding row per N, a degenerate all-Byzantine-silent timeout
+- [x] Verify no seed-cloned test-set leakage between each training pool
+      and its same-N test set — de-duplicated feature space has exactly
+      1 colliding row per N, a degenerate all-Byzantine-silent timeout
       state (message_drop_rate=1.0, response_time=timeout ceiling) that
       any seed converges to once consensus fully fails; not a seed leak,
       see notes/phase12.md
@@ -1403,11 +1405,94 @@ results/figures/scalability_curve.png
 
 ---
 
-## Immediate Next Steps
+## Phase 13 — Future Work: Graph Neural Network Monitor
 
-Phase 4 and Phase 4b are complete. Phase 4c is specified as an enhanced realism extension. The next implementation steps are:
+**Goal:** Explore whether PBFT monitoring improves when each consensus
+round is represented as a graph rather than as aggregate tabular
+features.
 
-1. [ ] Phase 5 feature extraction (`collection/feature_extractor.py`)
-2. [ ] Phase 6 label generation (`collection/label_generator.py`)
-3. [ ] Phase 7 main dataset generation (1200 rows)
-4. [ ] Pause to evaluate baseline ML performance before implementing Phase 4c enhanced modes
+**Motivation:** The current project deliberately uses lightweight,
+interpretable round-level classifiers over engineered features. A GNN
+extension would model the protocol more directly: replicas become nodes,
+protocol messages become typed edges, and the monitor predicts a
+round-level `normal` / `degraded` / `failure` label from node and edge
+behaviour.
+
+**Scope rule:** Keep this out of the current main conclusion. Phase 13
+is a future research direction, not a requirement for validating the
+current early-warning claim.
+
+**Candidate design:**
+
+```text
+Nodes: PBFT replicas
+Edges: observed protocol messages, optionally typed by phase
+Node features: local vote counts, timeout state, received-message counts
+Edge features: latency, dropped/delivered status, message type, sender role
+Graph label: round label (normal / degraded / failure)
+```
+
+**Tasks:**
+
+- [ ] Persist per-round node-level and edge-level traces from the
+      simulator instead of only aggregate round features
+- [ ] Build graph datasets that support variable network sizes
+      (`N=7`, `N=10`, `N=13`)
+- [ ] Train a graph-level classifier and compare it against the existing
+      tabular ML models
+- [ ] Check whether graph structure improves scale generalisation beyond
+      the mixed-N tabular baseline
+
+**Pass Criteria:**
+
+- [ ] GNN is evaluated on the same fault taxonomy and train/test regimes
+      as the tabular pipeline
+- [ ] Results show whether graph structure adds signal beyond engineered
+      aggregate features
+- [ ] The added complexity is justified by measurable gains or clearer
+      node-level diagnostics
+
+---
+
+## Phase 14 — Future Work: Temporal BiLSTM Monitor
+
+**Goal:** Explore whether temporal sequence models can predict consensus
+degradation from trends across consecutive rounds.
+
+**Motivation:** The current pipeline mostly treats each consensus round
+as an independent tabular sample. A BiLSTM only becomes conceptually
+useful if the task is reframed as sequence monitoring, where previous
+rounds provide context for predicting the current or next round state.
+
+**Scope rule:** Do not add BiLSTM as a single-row classifier. Phase 14
+should use real multi-round windows; otherwise it does not test a
+meaningfully temporal hypothesis.
+
+**Candidate design:**
+
+```text
+Input: windows of k previous rounds, e.g. k = 5 or 10
+Features: existing round-level feature vectors per timestep
+Target: current-round label or next-round label
+Split: contiguous simulation segments, not random row leakage
+```
+
+**Tasks:**
+
+- [ ] Construct sequence datasets from ordered simulation rounds
+- [ ] Evaluate multiple window sizes and compare against non-temporal
+      tabular models
+- [ ] Use leakage-safe splits that preserve temporal ordering
+- [ ] Report whether temporal context improves early warning at the
+      lead-time cutoffs
+
+**Pass Criteria:**
+
+- [ ] BiLSTM is evaluated only under a true sequence formulation
+- [ ] Results are compared against the existing lead-time experiment
+- [ ] Any gains are interpreted as temporal-context gains, not just
+      higher model capacity
+
+---
+
+

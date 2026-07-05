@@ -182,7 +182,7 @@ kept for provenance; it is not required for any downstream experiment.)
 .venv/bin/python -m scripts.diagnostics.evaluate_baseline
 ```
 
-### Stage 4 — Advanced-fault and ablation experiments (Phase 12.B–D)
+### Stage 4 — Advanced-fault and ablation experiments (Phase 12.B–E)
 
 ```bash
 # 12.B OOD evaluation on the extended set; optional exposure arm
@@ -198,6 +198,11 @@ kept for provenance; it is not required for any downstream experiment.)
 .venv/bin/python -m scripts.strict_round_ablation.generate
 .venv/bin/python -m scripts.strict_round_ablation.evaluate
 .venv/bin/python -m scripts.strict_round_ablation.plot
+
+# 12.E mixed-N training: add N=10/N=13 exposure and compare scale generalisation
+.venv/bin/python -m scripts.mixed_n_train.generate
+.venv/bin/python -m scripts.mixed_n_train.evaluate
+.venv/bin/python -m scripts.mixed_n_train.plot
 ```
 
 ### Stage 5 — Report figures
