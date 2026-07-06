@@ -164,6 +164,14 @@ PARAM_GRIDS = {
     } 
 }
 
+# =========================
+# For GNN Graph Construction
+# =========================
+MESSAGE_TYPE_TO_ID = {
+    'pre_prepare': 0,
+    'prepare': 1,
+    'commit': 2,
+}
 
 # Called once before Phase 7 writes the CSV: asserts that the keys produced by
 # extract_features match FEATURE_COLUMNS + AUXILIARY_COLUMNS exactly.
