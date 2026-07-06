@@ -56,3 +56,15 @@ def load_and_split_trainval_ext(feature_cols = FEATURE_COLUMNS,target_cols = TAR
         X, y, test_size=0.2, stratify=y, random_state=seed
     )
     return X_trainval_raw, X_test_raw, y_trainval, y_test
+
+def split_graphs(graphs, seed=RANDOM_SEED):
+    """Stratified 70/10/20 train/val/test split for a list of PyG Data graphs."""
+    labels = [int(g.y.item()) for g in graphs]
+
+    trainval, test, y_trainval, _ = train_test_split(
+        graphs, labels, test_size=0.2, random_state=seed, stratify=labels
+    )
+    train, val = train_test_split(
+        trainval, test_size=0.125, random_state=seed, stratify=y_trainval
+    )
+    return train, val, test

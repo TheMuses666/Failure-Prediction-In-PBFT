@@ -6,11 +6,12 @@ from tqdm import tqdm
 import threading, time
 from contextlib import contextmanager
 
-from config import RAW_DATA_FILE, RANDOM_SEEDS, TARGET_COLUMN,assert_feature_schema, FEATURE_COLUMNS_EXTEND
+from config import RAW_DATA_FILE, RANDOM_SEEDS, TARGET_COLUMN,assert_feature_schema, FEATURE_COLUMNS_EXTEND,NUM_NODES
 from ml.models.decision_tree import build_decision_tree
 from ml.models.random_forest import build_random_forest
 from ml.models.xgboost_model import build_xgboost
 from ml.models.logistic_regression import build_logistic_regression
+from src.data.graph_extractor import build_graph
 from ml.evaluation import model_evaluation
 from src.simulation.pbft import run_pbft_simulation
 from src.simulation.round_result import build_round_result
@@ -176,3 +177,22 @@ def run_ood_detection(
     return aggregate_metrics(records, ['model', 'fault_type'],
                              ['accuracy', 'detection_rate', 'failure_recall'],
                              out_path=out_path)
+
+
+def collect_graphs(start_id, n_rounds, fault_type, byz_ids, total_nodes=NUM_NODES,fault_subtype='base', **sim_kwargs):
+    with live_timer(f'simulating {n_rounds} {fault_type} ({fault_subtype}) rounds'):
+        raws = run_pbft_simulation(
+            start_round=start_id,
+            fault_type=fault_type,
+            byzantine_node_ids=byz_ids,
+            n_rounds=n_rounds,
+            total_nodes=total_nodes,
+            **sim_kwargs
+        )
+    graphs = []
+    for raw in raws:
+        rr = build_round_result(raw)
+        features = extract_features(rr)
+        label = generate_label(rr, features)
+        graphs.append(build_graph(raw, label))
+    return graphs
