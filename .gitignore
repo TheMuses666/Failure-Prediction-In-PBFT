@@ -49,3 +49,4 @@ results/**/*.json
 
 .claude
 notes/
+vscode/
