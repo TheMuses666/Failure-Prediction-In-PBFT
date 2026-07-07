@@ -1435,13 +1435,13 @@ Graph label: round label (normal / degraded / failure)
 
 **Tasks:**
 
-- [ ] Persist per-round node-level and edge-level traces from the
+- [x] Persist per-round node-level and edge-level traces from the
       simulator instead of only aggregate round features
-- [ ] Build graph datasets that support variable network sizes
+- [x] Build graph datasets that support variable network sizes
       (`N=7`, `N=10`, `N=13`)
-- [ ] Train a graph-level classifier and compare it against the existing
+- [x] Train a graph-level classifier and compare it against the existing
       tabular ML models
-- [ ] Check whether graph structure improves scale generalisation beyond
+- [x] Check whether graph structure improves scale generalisation beyond
       the mixed-N tabular baseline
 
 **Pass Criteria:**

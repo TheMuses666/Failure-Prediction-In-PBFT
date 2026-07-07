@@ -173,6 +173,19 @@ MESSAGE_TYPE_TO_ID = {
     'commit': 2,
 }
 
+# =========================
+# For synthetic dataset generation
+# =========================
+
+SEQUENCE_CONST ={
+    't': 60,
+    'n_fault': 80,
+    'n_normal': 20,
+    'onset_min': 15,
+    'onset_max': 45,
+    'seq_base_seed': 20000
+}  
+
 # Called once before Phase 7 writes the CSV: asserts that the keys produced by
 # extract_features match FEATURE_COLUMNS + AUXILIARY_COLUMNS exactly.
 def assert_feature_schema(feature_dict: dict) -> None:

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from config import RAW_DATA_FILE, FEATURE_COLUMNS, TARGET_COLUMN, RANDOM_SEED
@@ -68,3 +69,40 @@ def split_graphs(graphs, seed=RANDOM_SEED):
         trainval, test_size=0.125, random_state=seed, stratify=y_trainval
     )
     return train, val, test
+
+
+def build_windows(df, k, feature_cols):
+    X_list, y_list, sid_list = [], [], []
+
+    for seq_id, group in df.groupby('seq_id'):
+        group = group.sort_values('position')
+        features = group[feature_cols].values
+        labels = group[TARGET_COLUMN].values
+
+        for t in range(k-1,len(group)):
+
+            X_list.append(features[t-k+1:t+1])
+            y_list.append(labels[t])
+            sid_list.append(seq_id)
+    return (np.stack(X_list).astype(np.float32),
+            np.array(y_list),
+            np.array(sid_list))
+
+def split_by_sequence(df, seed, ratio=(0.7, 0.1, 0.2)):
+    """Split the DataFrame into train/val/test sets based on unique seq_id."""
+    seq_meta = df.groupby('seq_id')['fault_type'].first()
+
+    trainval_ids, test_ids = train_test_split(
+        seq_meta.index, test_size=ratio[2],
+        random_state=seed, stratify=seq_meta.values)
+    
+    n_val = round(len(seq_meta) * ratio[1])  
+    train_ids, val_ids = train_test_split(
+        trainval_ids, test_size=n_val,
+        random_state=seed, stratify=seq_meta.loc[trainval_ids].values)
+
+    train_df = df[df['seq_id'].isin(train_ids)]
+    val_df = df[df['seq_id'].isin(val_ids)]
+    test_df = df[df['seq_id'].isin(test_ids)]
+
+    return train_df, val_df, test_df
