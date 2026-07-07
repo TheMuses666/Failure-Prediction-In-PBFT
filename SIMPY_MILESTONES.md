@@ -1455,6 +1455,92 @@ Graph label: round label (normal / degraded / failure)
 
 ---
 
+## Plotting Backlog — Report-Complete Figure Set
+
+**Goal:** Maintain a complete figure checklist for the practical project
+report and dashboard. Existing performance plots already cover much of
+the model comparison story; the remaining gap is mostly dataset
+composition, feature-shift explanation, early-warning detail, and graph
+dataset interpretability.
+
+### A. Dataset and Simulator Sanity
+
+- [ ] `dataset_label_distribution.png` — label counts
+      (`normal` / `degraded` / `failure`) across all generated datasets
+- [ ] `dataset_fault_composition.png` — fault type/subtype counts across
+      main, extended, scalability, and mixed-N datasets
+- [ ] `feature_distribution_by_fault.png` — 13-feature boxplots grouped
+      by fault type
+- [ ] `feature_correlation_heatmap.png` — correlation heatmap for the
+      13-feature schema
+- [ ] `label_by_fault_type.png` — label distribution within each fault
+      type, showing which faults produce normal-like, degraded, or
+      failure rounds
+
+### B. Main Model Performance
+
+- [ ] `model_comparison.png` — headline accuracy/precision/recall/F1 for
+      main ML models
+- [ ] `baseline_vs_ml.png` — ML monitors versus static
+      threshold/rule/count baselines
+- [ ] `confusion_matrix_<model>.png` — normal/degraded/failure confusion
+      matrices on the main test split
+- [ ] `per_class_f1.png` — class-level F1, especially for the degraded
+      class that supports the early degradation claim
+
+### C. Early Prediction
+
+- [ ] `lead_time_comparison.png` — average warning lead time by model and
+      fault type
+- [ ] `lead_time_false_alarm.png` — false alarm rate on normal rounds
+      across prediction cutoffs
+- [ ] `lead_time_f1_by_cutoff.png` — macro-F1 at
+      `25/50/75/100/125/150 ms`
+- [ ] `early_detection_rate_by_cutoff.png` — degraded/failure detection
+      rate at each cutoff
+
+### D. Robustness and Generalisation
+
+- [ ] `robustness_curve.png` — Byzantine-count/ratio shift
+- [ ] `scalability_curve.png` — `N=7/10/13` network-size shift
+- [ ] `mixed_n_curve.png` — N=7-only versus mixed-N training
+- [ ] `feature_shift_by_network_size.png` — key feature distributions
+      across `N=7`, `N=10`, and `N=13`
+- [ ] `ood_f1_by_fault_subtype.png` — advanced-fault subtype performance
+- [ ] `ood_exposure_comparison.png` — main-only versus extended-exposure
+      OOD performance
+
+### E. Ablations and Security Assumptions
+
+- [ ] `feature_ablation.png` — 11 features versus
+      `+quorum_margin`, `+prepare_count_std`, and full 13-feature set
+- [ ] `tuning_ablation.png` — default versus tuned models
+- [ ] `auth_ablation_detection.png` — forgery intensity detection
+- [ ] `strict_ablation_detection.png` — strict round validation on/off
+      detection
+- [ ] `strict_ablation_quorum.png` or
+      `strict_ablation_success_timeout.png` — protocol-level effect of
+      strict validation on quorum, success, or timeout behaviour
+
+### F. GNN Extension
+
+- [ ] `gnn_scalability_curve.png` — GNN versus tabular models under
+      N=7-only training
+- [ ] `graph_dataset_summary.png` — graph count, average edge count, node
+      count, and label distribution for `N=7/10/13`
+- [ ] `gnn_confusion_matrix.png` — GNN confusion matrices on
+      `N=7`, `N=10`, and `N=13`
+- [ ] `gnn_mixed_n_curve.png` — baseline GNN versus mixed-N GNN, if
+      mixed-N graph training is implemented
+
+**Priority subset:** If time is limited, prioritise
+`dataset_label_distribution.png`, `dataset_fault_composition.png`,
+`label_by_fault_type.png`, `feature_distribution_by_fault.png`,
+`feature_shift_by_network_size.png`, `baseline_vs_ml.png`,
+`lead_time_f1_by_cutoff.png`, and `graph_dataset_summary.png`.
+
+---
+
 ## Phase 14 — Future Work: Temporal BiLSTM Monitor
 
 **Goal:** Explore whether temporal sequence models can predict consensus
