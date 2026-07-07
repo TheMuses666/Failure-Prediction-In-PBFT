@@ -30,6 +30,7 @@ Phase 12 -> Research-quality experiments
 Phase 12.E -> Optional mixed-N training
 Phase 13 -> Future work: graph neural network monitor
 Phase 14 -> Future work: temporal BiLSTM monitor
+Phase 15 -> Lightweight results dashboard
 ```
 
 ---
@@ -1492,6 +1493,66 @@ Split: contiguous simulation segments, not random row leakage
 - [ ] Results are compared against the existing lead-time experiment
 - [ ] Any gains are interpreted as temporal-context gains, not just
       higher model capacity
+
+---
+
+## Phase 15 — Lightweight Results Dashboard
+
+**Goal:** Build a compact dashboard for inspecting the generated PBFT
+monitoring results without turning the project into a full web
+application.
+
+**Motivation:** By Phase 12-14, the project produces many result tables
+and figures across model families, ablations, fault modes, scale shifts,
+lead-time cutoffs, advanced faults, mixed-N exposure, and graph/temporal
+extensions. A lightweight dashboard makes the practical project easier
+to demo, reproduce, and explain during review or presentation.
+
+**Scope rule:** Keep this as a results viewer, not an experiment runner.
+The dashboard should read existing `results/tables/*.csv` and
+`results/figures/*.png` outputs. It should not retrain models, regenerate
+datasets, upload arbitrary data, or become a separate frontend project.
+
+**Recommended implementation:** Use Streamlit, because the repository is
+already Python-first and the dashboard can directly reuse pandas and the
+generated result files.
+
+**Candidate views:**
+
+```text
+Overview: research question, dataset sizes, model families, fault modes
+Main Results: ML models versus static baselines
+Early Prediction: lead-time F1, detection rate, false alarm rate
+Generalisation: robustness, scalability, OOD, mixed-N exposure
+Ablations: feature set, tuning, authentication, strict-round validation
+GNN Extension: in-distribution versus scale-shift graph results
+```
+
+**Tasks:**
+
+- [ ] Add a lightweight dashboard entry point, e.g.
+      `src/plotting/dashboard.py` or `scripts/dashboard.py`
+- [ ] Load available CSV tables defensively, showing clear placeholders
+      when optional experiments have not been run
+- [ ] Provide compact charts for headline metrics and scale/lead-time
+      curves
+- [ ] Display generated figures where they already exist instead of
+      reimplementing every plot
+- [ ] Document the launch command in the README
+
+**Suggested command:**
+
+```bash
+streamlit run src/plotting/dashboard.py
+```
+
+**Pass Criteria:**
+
+- [ ] Dashboard launches from the repository root
+- [ ] Missing optional result files do not crash the app
+- [ ] Core Phase 12 results are visible without manual CSV inspection
+- [ ] Dashboard supports presentation/demo use while preserving the
+      project's script-based reproducibility
 
 ---
 
