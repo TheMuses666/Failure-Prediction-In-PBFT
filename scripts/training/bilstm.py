@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import pandas as pd
+from utils.helpers import build_and_fit_all_candidates
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import TensorDataset, DataLoader
 from ml.preprocessing import split_by_sequence, build_windows
@@ -44,6 +46,20 @@ def run_one_seed(seed, device):
     records = []
     test_metrics = evaluate_bilstm(model, test_loader, device)
     records.append({'seed': seed, 'model': 'bilstm', 'k': K, 'test_set': 'test', **test_metrics})
+
+    X_tr_last = X_tr[:, -1, :]
+    X_te_last = X_te[:, -1, :]
+
+    fitted = build_and_fit_all_candidates(seed, X_tr_last, y_tr)
+    for name, pipe in fitted.items():
+        pred = pipe.predict(X_te_last)
+        records.append({
+            'seed': seed, 'model': name, 'k': K, 'test_set': 'test',
+            'accuracy': accuracy_score(y_te, pred),
+            'precision': precision_score(y_te, pred, average='macro', zero_division=0),
+            'recall': recall_score(y_te, pred, average='macro', zero_division=0),
+            'f1': f1_score(y_te, pred, average='macro', zero_division=0),
+        })
 
     return records, model
 
