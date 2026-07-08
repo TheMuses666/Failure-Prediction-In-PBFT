@@ -1446,11 +1446,11 @@ Graph label: round label (normal / degraded / failure)
 
 **Pass Criteria:**
 
-- [ ] GNN is evaluated on the same fault taxonomy and train/test regimes
+- [x] GNN is evaluated on the same fault taxonomy and train/test regimes
       as the tabular pipeline
-- [ ] Results show whether graph structure adds signal beyond engineered
+- [x] Results show whether graph structure adds signal beyond engineered
       aggregate features
-- [ ] The added complexity is justified by measurable gains or clearer
+- [x] The added complexity is justified by measurable gains or clearer
       node-level diagnostics
 
 ---
@@ -1566,18 +1566,18 @@ Split: contiguous simulation segments, not random row leakage
 
 **Tasks:**
 
-- [ ] Construct sequence datasets from ordered simulation rounds
-- [ ] Evaluate multiple window sizes and compare against non-temporal
+- [x] Construct sequence datasets from ordered simulation rounds
+- [x] Evaluate multiple window sizes and compare against non-temporal
       tabular models
-- [ ] Use leakage-safe splits that preserve temporal ordering
-- [ ] Report whether temporal context improves early warning at the
+- [x] Use leakage-safe splits that preserve temporal ordering
+- [x] Report whether temporal context improves early warning at the
       lead-time cutoffs
 
 **Pass Criteria:**
 
-- [ ] BiLSTM is evaluated only under a true sequence formulation
-- [ ] Results are compared against the existing lead-time experiment
-- [ ] Any gains are interpreted as temporal-context gains, not just
+- [x] BiLSTM is evaluated only under a true sequence formulation
+- [x] Results are compared against the existing lead-time experiment
+- [x] Any gains are interpreted as temporal-context gains, not just
       higher model capacity
 
 ---

@@ -71,7 +71,7 @@ def split_graphs(graphs, seed=RANDOM_SEED):
     return train, val, test
 
 
-def build_windows(df, k, feature_cols):
+def build_windows(df, k, feature_cols, horizon = 0):
     X_list, y_list, sid_list = [], [], []
 
     for seq_id, group in df.groupby('seq_id'):
@@ -79,10 +79,10 @@ def build_windows(df, k, feature_cols):
         features = group[feature_cols].values
         labels = group[TARGET_COLUMN].values
 
-        for t in range(k-1,len(group)):
+        for t in range(k-1,len(group) - horizon):
 
             X_list.append(features[t-k+1:t+1])
-            y_list.append(labels[t])
+            y_list.append(labels[t+horizon])
             sid_list.append(seq_id)
     return (np.stack(X_list).astype(np.float32),
             np.array(y_list),

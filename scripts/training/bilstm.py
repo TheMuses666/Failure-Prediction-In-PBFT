@@ -11,9 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from ml.evaluation import aggregate_metrics
 from config import DATA_RAW_DIR, RANDOM_SEEDS, RESULTS_MODELS_DIR, RESULTS_TABLES_DIR, FEATURE_COLUMNS_EXTEND
 
-K = 5
-
-def run_one_seed(seed, device):
+def run_one_seed(seed, device, horizon, k):
     df = pd.read_csv(DATA_RAW_DIR / 'sequence_dataset.csv')
     tr, va, te = split_by_sequence(df, seed=seed)
 
@@ -22,9 +20,9 @@ def run_one_seed(seed, device):
     for part in (tr, va, te):
         part[FEATURE_COLUMNS_EXTEND] = scaler.transform(part[FEATURE_COLUMNS_EXTEND])
 
-    X_tr, y_tr, _ = build_windows(tr, K, FEATURE_COLUMNS_EXTEND)
-    X_va, y_va, _ = build_windows(va, K, FEATURE_COLUMNS_EXTEND)
-    X_te, y_te, _ = build_windows(te, K, FEATURE_COLUMNS_EXTEND)
+    X_tr, y_tr, _ = build_windows(tr, k, FEATURE_COLUMNS_EXTEND, horizon)
+    X_va, y_va, _ = build_windows(va, k, FEATURE_COLUMNS_EXTEND, horizon)
+    X_te, y_te, _ = build_windows(te, k, FEATURE_COLUMNS_EXTEND, horizon)
 
     torch.manual_seed(seed)
 
@@ -45,7 +43,7 @@ def run_one_seed(seed, device):
 
     records = []
     test_metrics = evaluate_bilstm(model, test_loader, device)
-    records.append({'seed': seed, 'model': 'bilstm', 'k': K, 'test_set': 'test', **test_metrics})
+    records.append({'seed': seed, 'model': 'bilstm', 'k': k, 'test_set': 'test','horizon': horizon, **test_metrics})
 
     X_tr_last = X_tr[:, -1, :]
     X_te_last = X_te[:, -1, :]
@@ -54,7 +52,7 @@ def run_one_seed(seed, device):
     for name, pipe in fitted.items():
         pred = pipe.predict(X_te_last)
         records.append({
-            'seed': seed, 'model': name, 'k': K, 'test_set': 'test',
+            'seed': seed, 'model': name, 'k': k, 'test_set': 'test', 'horizon': horizon,
             'accuracy': accuracy_score(y_te, pred),
             'precision': precision_score(y_te, pred, average='macro', zero_division=0),
             'recall': recall_score(y_te, pred, average='macro', zero_division=0),
@@ -69,16 +67,18 @@ def main():
     all_records = []
     last_model = None
     for seed in RANDOM_SEEDS:
-        print(f'=== seed {seed} ===')
-        records, last_model = run_one_seed(seed, device)
-        all_records.extend(records)
+        for k in (5,10):
+            for horizon in (0, 1):
+                print(f'=== seed {seed} horizon {horizon} K {k} ===')
+                records, last_model = run_one_seed(seed, device, horizon,k)
+                all_records.extend(records)
 
     RESULTS_MODELS_DIR.mkdir(parents=True, exist_ok=True)
     torch.save(last_model.state_dict(), RESULTS_MODELS_DIR / 'bilstm.pt')
 
     RESULTS_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     summary = aggregate_metrics(
-        all_records, ['model', 'test_set'], ['accuracy', 'precision', 'recall', 'f1'],
+        all_records, ['model','k','horizon', 'test_set'], ['accuracy', 'precision', 'recall', 'f1'],
         out_path=RESULTS_TABLES_DIR / 'model_metrics_bilstm.csv'
     )
     print(summary)
