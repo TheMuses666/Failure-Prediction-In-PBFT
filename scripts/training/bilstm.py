@@ -51,12 +51,16 @@ def run_one_seed(seed, device, horizon, k):
     fitted = build_and_fit_all_candidates(seed, X_tr_last, y_tr)
     for name, pipe in fitted.items():
         pred = pipe.predict(X_te_last)
+        per_class = f1_score(y_te, pred, average=None, labels=[0, 1, 2], zero_division=0)
         records.append({
             'seed': seed, 'model': name, 'k': k, 'test_set': 'test', 'horizon': horizon,
             'accuracy': accuracy_score(y_te, pred),
             'precision': precision_score(y_te, pred, average='macro', zero_division=0),
             'recall': recall_score(y_te, pred, average='macro', zero_division=0),
             'f1': f1_score(y_te, pred, average='macro', zero_division=0),
+            'f1_normal': per_class[0],
+            'f1_degraded': per_class[1],
+            'f1_failure': per_class[2],
         })
 
     return records, model
@@ -78,7 +82,7 @@ def main():
 
     RESULTS_TABLES_DIR.mkdir(parents=True, exist_ok=True)
     summary = aggregate_metrics(
-        all_records, ['model','k','horizon', 'test_set'], ['accuracy', 'precision', 'recall', 'f1'],
+        all_records, ['model','k','horizon', 'test_set'], ['accuracy', 'precision', 'recall', 'f1', 'f1_normal', 'f1_degraded', 'f1_failure'],
         out_path=RESULTS_TABLES_DIR / 'model_metrics_bilstm.csv'
     )
     print(summary)

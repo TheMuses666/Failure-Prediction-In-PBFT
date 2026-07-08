@@ -24,7 +24,11 @@ def evaluate_bilstm(model, loader, device):
         preds = logits.argmax(dim=1)
         y_true.extend(yb.tolist())
         y_pred.extend(preds.cpu().tolist())
+    per_class = f1_score(y_true, y_pred, average=None, labels=[0, 1, 2], zero_division=0)
     return {
+        'f1_normal': per_class[0],
+        'f1_degraded': per_class[1],
+        'f1_failure': per_class[2],
         'accuracy': accuracy_score(y_true, y_pred),
         'precision': precision_score(y_true, y_pred, average='macro', zero_division=0),
         'recall': recall_score(y_true, y_pred, average='macro', zero_division=0),

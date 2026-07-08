@@ -14,7 +14,7 @@ def generate_episode(seq_id, fault_type, onset, T):
         raws = run_pbft_simulation(n_rounds =T, fault_type='normal',byzantine_node_ids=[],seed=ep_seed, start_round=1)
     else:
         raws_a = run_pbft_simulation(n_rounds = onset - 1, fault_type='normal',byzantine_node_ids=[],seed=ep_seed, start_round=1)
-        raws_b = run_pbft_simulation(n_rounds =T - onset + 1, fault_type=fault_type,byzantine_node_ids=[0],seed=ep_seed+1234, start_round=onset)
+        raws_b = run_pbft_simulation(n_rounds =T - onset + 1, fault_type=fault_type,byzantine_node_ids=[4,5],seed=ep_seed+1234, start_round=onset)
         raws = raws_a + raws_b
 
     rows = []
