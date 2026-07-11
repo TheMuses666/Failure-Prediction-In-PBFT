@@ -1533,6 +1533,50 @@ dataset interpretability.
 - [ ] `gnn_mixed_n_curve.png` — baseline GNN versus mixed-N GNN, if
       mixed-N graph training is implemented
 
+### G. Explanatory and Deployment Supplements
+
+Figures outside the original evidence checklist. Groups A-F prove the
+results; group G explains the system and the deployment claim in the
+report's methodology and discussion sections.
+
+Script-generated:
+
+- [ ] `pbft_round_timeline.png` — message send/delivery timeline of one
+      normal round versus one delay-fault round, drawn from the
+      simulator message log; explains what the simulator models and
+      what a delay attack looks like
+- [ ] `inference_latency_comparison.png` — per-sample inference latency
+      of static baselines, LR, tree models, and GNN/BiLSTM (log scale);
+      operational evidence for the lightweight-monitor claim
+- [ ] `learning_curve.png` — test macro-F1 versus training-set size
+      (optional); pre-empts the "is 1200 rows enough?" question
+
+Hand-drawn (draw.io / PowerPoint, not script-generated):
+
+- [ ] `system_architecture` — simulator module diagram
+      (network → node → pbft → fault_injector → features → labels)
+- [ ] `experiment_pipeline` — end-to-end pipeline diagram
+      (simulate → features → labels → train → evaluate → ablations)
+- [ ] `project_gantt.png` — tracked in Phase 11c; listed here for
+      completeness
+
+### Backfill — Figures Promised by Earlier Phases
+
+Output figures listed by earlier phases that are currently missing from
+`results/figures/` (the results directory was cleared at some point).
+All scripts and input data exist; regenerate with the commands shown.
+
+- [ ] `phase4c_variance_comparison.png` — Phase 8; operational proof of
+      Phase 4c pass criterion PC2 (`scripts.diagnostics.validate_simulator`)
+- [ ] `feature_distribution_by_subtype.png` — Phase 8
+      (`scripts.diagnostics.validate_simulator`)
+- [ ] `feature_importance.png` — Phase 12.A SHAP
+      (`scripts.diagnostics.shap_analysis`)
+- [ ] `detection_rate_by_fault_type.png` — Phase 12.A
+      (`scripts.diagnostics.per_fault_type` then `scripts.plotting.per_fault_type`)
+- [ ] `failure_recall_by_fault_type.png` — Phase 12.A
+      (same commands as above)
+
 **Priority subset:** If time is limited, prioritise
 `dataset_label_distribution.png`, `dataset_fault_composition.png`,
 `label_by_fault_type.png`, `feature_distribution_by_fault.png`,

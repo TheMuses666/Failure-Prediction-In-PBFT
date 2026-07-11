@@ -44,7 +44,42 @@ def main():
         y_lim=(0, 150),
     )
 
-    print('Saved lead_time_false_alarm.png and lead_time_comparison.png')
+    # Figure 3: macro-F1 vs cutoff
+    f1 = pd.read_csv(RESULTS_TABLES_DIR / 'lead_time_f1_by_cutoff.csv')
+    plot_grouped_curve(
+        df=f1,
+        out_path=RESULTS_FIGURES_DIR / 'lead_time_f1_by_cutoff.png',
+        x_col='cutoff',
+        y_col='f1_mean',
+        std_col='f1_std',
+        group_col='model',
+        x_label='Prediction cutoff (ms)',
+        y_label='Macro-F1',
+        title='Macro-F1 vs prediction cutoff',
+        x_ticks=CUTOFFS_MS,
+        y_lim=(0.4, 1.0),
+        markers=MARKERS,
+    )
+
+    # Figure 4: degraded/failure detection rate vs cutoff
+    det = pd.read_csv(RESULTS_TABLES_DIR / 'early_detection_rate_by_cutoff.csv')
+    plot_grouped_curve(
+        df=det,
+        out_path=RESULTS_FIGURES_DIR / 'early_detection_rate_by_cutoff.png',
+        x_col='cutoff',
+        y_col='detection_rate_mean',
+        std_col='detection_rate_std',
+        group_col='model',
+        x_label='Prediction cutoff (ms)',
+        y_label='Detection rate (degraded/failure rounds)',
+        title='Early detection rate vs prediction cutoff',
+        x_ticks=CUTOFFS_MS,
+        y_lim=(0.4, 1.0),
+        markers=MARKERS,
+    )
+
+    print('Saved lead_time_false_alarm.png, lead_time_comparison.png, '
+          'lead_time_f1_by_cutoff.png and early_detection_rate_by_cutoff.png')
 
 
 if __name__ == '__main__':

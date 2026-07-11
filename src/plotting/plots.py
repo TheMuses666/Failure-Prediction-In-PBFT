@@ -135,6 +135,7 @@ def plot_grouped_bar(
     title=None,
     y_lim=None,
     figsize=(9, 5),
+    x_rotation=0,
 ):
 
     import numpy as np
@@ -167,7 +168,8 @@ def plot_grouped_bar(
                capsize=3, alpha=0.85)
     
     ax.set_xticks(x_positions)
-    ax.set_xticklabels(x_categories, rotation=0)
+    ax.set_xticklabels(x_categories, rotation=x_rotation,
+                       ha='right' if x_rotation else 'center')
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     if y_lim:
@@ -179,6 +181,25 @@ def plot_grouped_bar(
     
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Figure saved --> {out_path}')
+
+
+def plot_correlation_heatmap(df, feature_cols, out_path, title=None):
+    corr = df[feature_cols].corr()
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm',
+                vmin=-1, vmax=1, square=True,
+                annot_kws={'fontsize': 7}, ax=ax)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+    if title:
+        ax.set_title(title)
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print(f'Figure saved --> {out_path}')

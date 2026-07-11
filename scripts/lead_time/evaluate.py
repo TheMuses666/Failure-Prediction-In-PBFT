@@ -1,4 +1,5 @@
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
 import pandas as pd
 
 from config import (
@@ -103,6 +104,42 @@ def main():
         groupby_cols=['model', 'cutoff'],
         value_cols=['false_alarm_rate'],
         out_path=RESULTS_TABLES_DIR / 'lead_time_false_alarm.csv',
+    )
+
+    # ═══════════════════════════════════════════════════════════
+    # ⑤ Macro-F1 per (model, cutoff)
+    # ═══════════════════════════════════════════════════════════
+    f1_records = []
+    for (model, cutoff, seed), g in pred_df.groupby(['model', 'cutoff', 'seed']):
+        f1_records.append({
+            'model': model, 'cutoff': cutoff, 'seed': seed,
+            'f1': f1_score(g[TARGET_COLUMN], g['pred'], average='macro'),
+        })
+
+    print('\n=== Macro-F1 by Cutoff ===')
+    aggregate_metrics(
+        f1_records,
+        groupby_cols=['model', 'cutoff'],
+        value_cols=['f1'],
+        out_path=RESULTS_TABLES_DIR / 'lead_time_f1_by_cutoff.csv',
+    )
+
+    # ═══════════════════════════════════════════════════════════
+    # ⑥ Early detection rate per (model, cutoff):
+    #    fraction of true degraded/failure rounds flagged as degraded/failure
+    # ═══════════════════════════════════════════════════════════
+    faulty = pred_df[pred_df[TARGET_COLUMN].isin([1, 2])].copy()
+    faulty['detected'] = faulty['pred'].isin([1, 2]).astype(int)
+    det_per_seed = (faulty.groupby(['model', 'cutoff', 'seed'])['detected']
+                    .mean().reset_index()
+                    .rename(columns={'detected': 'detection_rate'}))
+
+    print('\n=== Early Detection Rate by Cutoff ===')
+    aggregate_metrics(
+        det_per_seed,
+        groupby_cols=['model', 'cutoff'],
+        value_cols=['detection_rate'],
+        out_path=RESULTS_TABLES_DIR / 'early_detection_rate_by_cutoff.csv',
     )
 
 
