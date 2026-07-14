@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 from src.simulation.pbft import run_pbft_simulation
-from config import RESULTS_FIGURES_DIR, BYZ_IDS, CONSENSUS_TIMEOUT_MS
-
-COLORS = {
-    'pre_prepare': 'tab:blue',
-    'prepare': 'tab:orange',
-    'commit': 'tab:green',
-}
+from config import (
+    BYZ_IDS,
+    CONSENSUS_TIMEOUT_MS,
+    FAULT_MESSAGE_COLOR,
+    PBFT_PHASE_COLORS,
+    RESULTS_FIGURES_DIR,
+    TIMEOUT_COLOR,
+)
 
 
 def draw_round(ax, raw, title):
@@ -14,7 +15,7 @@ def draw_round(ax, raw, title):
     for m in net.message_log:
         if m.delivery_time is None:
             continue
-        color = COLORS.get(m.message_type, 'gray')
+        color = PBFT_PHASE_COLORS.get(m.message_type, 'gray')
         style = '--' if m.fault_type else '-'
         ax.plot([m.send_time, m.delivery_time],
                 [m.receiver_id, m.receiver_id],
@@ -22,8 +23,8 @@ def draw_round(ax, raw, title):
         ax.plot(m.delivery_time, m.receiver_id, marker='|',
                 color=color, markersize=8)
 
-    ax.axvline(CONSENSUS_TIMEOUT_MS, color='red', linestyle=':', alpha=0.7)
-    ax.text(CONSENSUS_TIMEOUT_MS + 2, 0.2, 'timeout', color='red', fontsize=8)
+    ax.axvline(CONSENSUS_TIMEOUT_MS, color=TIMEOUT_COLOR, linestyle=':', alpha=0.7)
+    ax.text(CONSENSUS_TIMEOUT_MS + 2, 0.2, 'timeout', color=TIMEOUT_COLOR, fontsize=8)
     ax.set_title(title)
     ax.set_xlabel('Simulated time (ms)')
     ax.set_yticks(range(len(net.nodes)))
@@ -41,8 +42,8 @@ def main():
     draw_round(ax2, delay, f'Delay-fault round (Byzantine nodes {BYZ_IDS})')
     ax1.set_ylabel('Receiver node id')
 
-    handles = [plt.Line2D([0], [0], color=c, label=t) for t, c in COLORS.items()]
-    handles.append(plt.Line2D([0], [0], color='gray', linestyle='--',
+    handles = [plt.Line2D([0], [0], color=c, label=t) for t, c in PBFT_PHASE_COLORS.items()]
+    handles.append(plt.Line2D([0], [0], color=FAULT_MESSAGE_COLOR, linestyle='--',
                               label='fault-affected message'))
     ax2.legend(handles=handles, loc='center left', bbox_to_anchor=(1.02, 0.5))
 

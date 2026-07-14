@@ -213,6 +213,18 @@ kept for provenance; it is not required for any downstream experiment.)
 .venv/bin/python -m scripts.plotting.per_fault_type
 ```
 
+### Optional — Results dashboard
+
+```bash
+.venv/bin/streamlit run src/plotting/dashboard.py
+```
+
+On Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\streamlit.exe run src\plotting\dashboard.py
+```
+
 ---
 
 ## 4. Key outputs
@@ -228,6 +240,17 @@ kept for provenance; it is not required for any downstream experiment.)
 | `results/tables/ood_f1*.csv`, `ood_per_subtype*.csv` | OOD degradation and exposure arm (12.B) |
 | `results/tables/auth_ablation*.csv` + `figures/auth_ablation_detection.png` | forgery intensity sweep (12.C) |
 | `results/tables/strict_ablation_*.csv` + `figures/strict_ablation_detection.png` | validation ablation (12.D) |
+
+### Results dashboard (Phase 15)
+
+A lightweight Streamlit viewer over the generated tables and figures.
+It only reads existing `results/tables/*.csv`, `results/figures/*.png`,
+and `data/raw/*.csv` outputs — missing files render as placeholders with
+the command needed to regenerate them.
+
+```bash
+streamlit run src/plotting/dashboard.py
+```
 
 ---
 

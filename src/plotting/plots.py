@@ -2,6 +2,21 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap
+
+from config import CHART_COLORS, DASHBOARD_PALETTE
+
+HEATMAP_CMAP = LinearSegmentedColormap.from_list(
+    "pbft_soft_heatmap",
+    [DASHBOARD_PALETTE["paper"], DASHBOARD_PALETTE["soft"], CHART_COLORS[1]],
+)
+
+CORRELATION_CMAP = LinearSegmentedColormap.from_list(
+    "pbft_soft_diverging",
+    [CHART_COLORS[0], DASHBOARD_PALETTE["paper"], CHART_COLORS[1]],
+)
+
+sns.set_palette(CHART_COLORS)
 
 def plot_feature_distribution_by_group(df, feature_cols, group_cols, out_path, title=None):
 
@@ -13,7 +28,8 @@ def plot_feature_distribution_by_group(df, feature_cols, group_cols, out_path, t
     axes = axes.flatten()
 
     for i, feature in enumerate(feature_cols):
-        sns.boxplot(data=df, x=group_cols, y=feature, ax=axes[i])
+        sns.boxplot(data=df, x=group_cols, y=feature, hue=group_cols,
+                    ax=axes[i], palette=CHART_COLORS, legend=False)
         axes[i].set_title(feature, fontsize = 12)
         axes[i].set_xlabel('')
         axes[i].tick_params(axis = 'x',rotation=30)
@@ -47,8 +63,10 @@ def plot_variance_comparison(df, feature_cols, comparisons, out_path, title = No
         x = np.arange(n_feature)
         width = 0.35
 
-        axes[i].bar(x - width/2, base_std, width, label=base)
-        axes[i].bar(x + width/2, adv_std,  width, label=advanced)
+        axes[i].bar(x - width/2, base_std, width, label=base,
+                    color=CHART_COLORS[0])
+        axes[i].bar(x + width/2, adv_std,  width, label=advanced,
+                    color=CHART_COLORS[1])
         axes[i].set_xticks(x)
         axes[i].set_xticklabels(feature_cols, rotation=45, ha='right', fontsize=9)
         axes[i].set_ylabel('Std')
@@ -84,25 +102,27 @@ def plot_grouped_curve(
 ):
     fig, ax = plt.subplots(figsize=(7, 5))
     
-    for group_name in df[group_col].unique():
+    for color_idx, group_name in enumerate(df[group_col].unique()):
         sub = df[df[group_col] == group_name].sort_values(x_col)
-        
+
         m = markers[group_name] if markers else 'o'
-        line, = ax.plot(sub[x_col], sub[y_col], marker=m, label=group_name)
-        
+        color = CHART_COLORS[color_idx % len(CHART_COLORS)]
+        ax.plot(sub[x_col], sub[y_col], marker=m, label=group_name,
+                color=color)
+
         ax.fill_between(
             sub[x_col],
             sub[y_col] - sub[std_col],
             sub[y_col] + sub[std_col],
             alpha=0.2,
-            color=line.get_color(),   
+            color=color,
         )
     
     if vline_x is not None:
-        ax.axvline(x=vline_x, color='red', linestyle='--', alpha=0.5)
+        ax.axvline(x=vline_x, color=CHART_COLORS[4], linestyle='--', alpha=0.5)
         if vline_label:
             ax.text(vline_x + 0.05, y_lim[0] + 0.35, vline_label,
-                    color='red', fontsize=9)
+                    color=CHART_COLORS[4], fontsize=9)
     
     if x_ticks:
         ax.set_xticks(x_ticks)
@@ -165,7 +185,8 @@ def plot_grouped_bar(
                 stds.append(row[std_col].values[0] if std_col else 0)
         
         ax.bar(offsets, means, bar_width, yerr=stds, label=group_name,
-               capsize=3, alpha=0.85)
+               capsize=3, alpha=0.85,
+               color=CHART_COLORS[i % len(CHART_COLORS)])
     
     ax.set_xticks(x_positions)
     ax.set_xticklabels(x_categories, rotation=x_rotation,
@@ -190,7 +211,7 @@ def plot_correlation_heatmap(df, feature_cols, out_path, title=None):
     corr = df[feature_cols].corr()
 
     fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm',
+    sns.heatmap(corr, annot=True, fmt='.2f', cmap=CORRELATION_CMAP,
                 vmin=-1, vmax=1, square=True,
                 annot_kws={'fontsize': 7}, ax=ax)
     plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
@@ -211,7 +232,7 @@ def plot_confusion_heatmap(cm_df, out_path, label_names, title=None):
     for ax, dist in zip(axes, dists):
         sub = cm_df[cm_df['distribution'] == dist]
         m = sub.pivot(index='true_label', columns='pred_label', values='count')
-        sns.heatmap(m, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax,
+        sns.heatmap(m, annot=True, fmt='d', cmap=HEATMAP_CMAP, cbar=False, ax=ax,
                     xticklabels=label_names, yticklabels=label_names)
         ax.set_title(dist); ax.set_xlabel('Predicted'); ax.set_ylabel('True')
     if title:

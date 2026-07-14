@@ -50,6 +50,40 @@ LABEL_NAMES = {
     LABEL_FAILURE: "failure"
 }
 
+# =========================
+# Plotting / dashboard colours
+# =========================
+
+CHART_COLORS = [
+    "#cc855b",  # orange / degraded
+    "#679cd7",  # blue / failure
+    "#cf7c8e",  # pink / normal
+    "#a59b48",  # olive
+    "#b2545e",  # brick red
+    "#6760a4",  # slate violet
+    "#82a65f",  # sage green
+]
+
+DASHBOARD_PALETTE = {
+    "primary": "#f5f5f5",
+    "text": "#444444",
+    "warm": "#eae9dc",
+    "soft": "#ececea",
+    "line": "#dddad2",
+    "muted": "#c2c5c0",
+    "sidebar": "#f1f0e9",
+    "paper": "#ffffff",
+}
+
+PBFT_PHASE_COLORS = {
+    "pre_prepare": CHART_COLORS[0],
+    "prepare": CHART_COLORS[1],
+    "commit": CHART_COLORS[2],
+}
+
+TIMEOUT_COLOR = CHART_COLORS[4]
+FAULT_MESSAGE_COLOR = CHART_COLORS[5]
+
 NORMAL_LATENCY_THRESHOLD_MAX = 50
 DEGRADED_LATENCY_THRESHOLD_MAX = 150
 

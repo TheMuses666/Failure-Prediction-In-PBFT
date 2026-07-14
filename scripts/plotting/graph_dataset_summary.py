@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from config import DATA_RAW_DIR, RESULTS_FIGURES_DIR, LABEL_NAMES
+from config import CHART_COLORS, DATA_RAW_DIR, RESULTS_FIGURES_DIR, LABEL_NAMES
 
 NODE_COUNTS = [7, 10, 13]
 
@@ -26,7 +26,8 @@ def main():
     width = 0.25
     for i, lbl in enumerate([0, 1, 2]):
         counts = [stats[n]['label_counts'][lbl] for n in NODE_COUNTS]
-        ax1.bar(x + (i - 1) * width, counts, width, label=LABEL_NAMES[lbl])
+        ax1.bar(x + (i - 1) * width, counts, width, label=LABEL_NAMES[lbl],
+                color=CHART_COLORS[i])
     ax1.set_xticks(x)
     ax1.set_xticklabels([f'N={n}\n({stats[n]["n_graphs"]} graphs)'
                          for n in NODE_COUNTS])
@@ -38,8 +39,10 @@ def main():
     # Right: average node / edge counts per network size
     avg_nodes = [stats[n]['avg_nodes'] for n in NODE_COUNTS]
     avg_edges = [stats[n]['avg_edges'] for n in NODE_COUNTS]
-    b1 = ax2.bar(x - 0.2, avg_nodes, 0.4, label='avg nodes')
-    b2 = ax2.bar(x + 0.2, avg_edges, 0.4, label='avg edges')
+    b1 = ax2.bar(x - 0.2, avg_nodes, 0.4, label='avg nodes',
+                 color=CHART_COLORS[0])
+    b2 = ax2.bar(x + 0.2, avg_edges, 0.4, label='avg edges',
+                 color=CHART_COLORS[1])
     ax2.bar_label(b1, fmt='%.0f')
     ax2.bar_label(b2, fmt='%.0f')
     ax2.set_xticks(x)

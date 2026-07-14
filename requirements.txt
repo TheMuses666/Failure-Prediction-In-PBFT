@@ -10,3 +10,4 @@ simpy
 tqdm
 torch 
 torch_geometric
+streamlit

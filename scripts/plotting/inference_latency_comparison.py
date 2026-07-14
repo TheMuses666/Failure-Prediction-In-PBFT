@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 from torch_geometric.loader import DataLoader
 
-from config import (RAW_DATA_FILE, DATA_RAW_DIR, RESULTS_MODELS_DIR,
+from config import (CHART_COLORS, RAW_DATA_FILE, DATA_RAW_DIR, RESULTS_MODELS_DIR,
                     RESULTS_TABLES_DIR, RESULTS_FIGURES_DIR,
                     FEATURE_COLUMNS_EXTEND, RANDOM_SEED)
 from ml.preprocessing import load_and_split_trainval_ext, build_windows
@@ -15,7 +15,6 @@ from utils.helpers import build_and_fit_all_candidates
 from baseline.static_detection import (fit_threshold, threshold_detector,
                                        rule_based_detector,
                                        fit_count_threshold, count_based_detector)
-
 
 def timed_per_sample_us(fn, n_samples, repeats=5):
     """Best-of-N batch prediction time, averaged per sample, in microseconds."""
@@ -93,7 +92,8 @@ def main():
     print(table.to_string(index=False))
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    bars = ax.bar(table['model'], table['latency_us'], alpha=0.85)
+    colors = [CHART_COLORS[i % len(CHART_COLORS)] for i in range(len(table))]
+    bars = ax.bar(table['model'], table['latency_us'], alpha=0.85, color=colors)
     ax.bar_label(bars, fmt='%.1f')
     ax.set_yscale('log')
     ax.set_ylabel('Per-sample inference latency (µs, log scale)')
