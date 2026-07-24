@@ -472,6 +472,52 @@ def bar_chart(
     )
     st.altair_chart(chart_theme(chart), width="stretch")
 
+def fault_composition_chart(df: pd.DataFrame, height: int | None = None) -> None:
+    required = {"dataset", "fault", "count"}
+    if df.empty or not required.issubset(df.columns):
+        return
+
+    view = df.copy()
+    view["dataset"] = view["dataset"].astype(str)
+    view["fault"] = view["fault"].astype(str)
+    fault_order = list(
+        dict.fromkeys(
+            [
+                "normal", "silent", "delay", "replay", "equivocation",
+                "forgery", "silent_prepare", "silent_commit", "silent_all",
+                "delay_gaussian", "delay_lognormal", "replay_stale",
+            ]
+            + sorted(view["fault"].unique())
+        )
+    )
+
+    chart = (
+        alt.Chart(view)
+        .mark_bar(size=22, cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
+        .encode(
+            x=alt.X(
+                "fault:N",
+                title="fault",
+                sort=fault_order,
+                axis=alt.Axis(labelAngle=-35, labelLimit=140),
+            ),
+            y=alt.Y("count:Q", title="count"),
+            color=alt.Color(
+                "dataset:N",
+                scale=alt.Scale(range=CHART_COLORS),
+                legend=alt.Legend(title="dataset", orient="bottom"),
+            ),
+            xOffset=alt.XOffset("dataset:N"),
+            tooltip=[
+                alt.Tooltip("dataset:N", title="dataset"),
+                alt.Tooltip("fault:N", title="fault"),
+                alt.Tooltip("count:Q", title="count", format=",d"),
+            ],
+        )
+        .properties(height=height or 380, title="Fault composition")
+    )
+    st.altair_chart(chart_theme(chart), width="stretch")
+
 def label_name(value: object) -> str:
     try:
         numeric = int(value)

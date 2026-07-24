@@ -706,7 +706,7 @@ data/raw/consensus_data.csv
 ### Verification
 
 ```bash
-.venv/bin/python -m scripts.generate_main_dataset
+.venv/bin/python -m scripts.data_generation.main_dataset
 .venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['fault_type'].value_counts()); print(df['label'].value_counts())"
 ```
 
@@ -746,12 +746,15 @@ bft_project/
 │
 ├── scripts/
 │   ├── __init__.py
-│   ├── generate_main_dataset.py
-│   ├── validate_simulator.py
-│   ├── ablation.py
-│   ├── lead_time.py
-│   ├── robustness.py
-│   └── scalability.py
+│   ├── dashboard.py
+│   ├── data_generation/     (main_dataset.py, ...)
+│   ├── diagnostics/         (validate_simulator.py, ...)
+│   ├── training/            (default.py, tuned.py, ...)
+│   ├── feature_ablation/
+│   ├── lead_time/
+│   ├── robustness/
+│   ├── scalability/
+│   └── plotting/
 │
 ├── data/
 ├── results/
@@ -772,7 +775,7 @@ bft_project/
 - [ ] Rename `collection/` to `src/data/`
 - [ ] Rename `visualization/` to `src/plotting/`
 - [ ] Create `scripts/`
-- [ ] Move `main.py` to `scripts/generate_main_dataset.py`
+- [ ] Move `main.py` to `scripts/data_generation/main_dataset.py` (originally planned as `scripts/generate_main_dataset.py`)
 - [ ] Move experiment scripts from `experiments/` to `scripts/`
 - [ ] Rename `experiments/simulator_validation.py` to `scripts/validate_simulator.py` if present
 - [ ] Rename `experiments/ablation_test.py` to `scripts/ablation.py`
@@ -787,8 +790,8 @@ bft_project/
 - [ ] Update imports from `simulation.*` to `src.simulation.*`
 - [ ] Update imports from `collection.*` to `src.data.*`
 - [ ] Update plotting imports to `src.plotting.*`
-- [ ] Update dataset generation entry point to `scripts/generate_main_dataset.py`
-- [ ] Update validation entry point to `scripts/validate_simulator.py`
+- [ ] Update dataset generation entry point to `scripts/data_generation/main_dataset.py`
+- [ ] Update validation entry point to `scripts/diagnostics/validate_simulator.py`
 - [ ] Update result table paths from `results/metrics/` to `results/tables/`
 - [ ] Keep raw and processed datasets under top-level `data/`
 - [ ] Keep trained models under `results/models/`
@@ -796,7 +799,7 @@ bft_project/
 ### Smoke Tests
 
 ```bash
-.venv/bin/python -m scripts.generate_main_dataset
+.venv/bin/python -m scripts.data_generation.main_dataset
 .venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/consensus_data.csv'); print(df.shape); print(df['label'].value_counts())"
 .venv/bin/python -c "import pandas as pd; df=pd.read_csv('data/raw/extended_robustness.csv'); print(df.shape); print(df['fault_subtype'].value_counts())"
 ```
@@ -870,7 +873,7 @@ ml/models/decision_tree.py
 ml/models/random_forest.py
 ml/models/xgboost_model.py
 ml/evaluation.py
-scripts/train_model.py
+scripts/training/default.py
 ```
 
 **Goal:** Train and evaluate ML models.
@@ -916,7 +919,7 @@ results/models/scaler.joblib
 ### Entry point
 
 ```bash
-.venv/bin/python -m scripts.train_model
+.venv/bin/python -m scripts.training.default
 ```
 
 ### Pass Criteria
@@ -983,7 +986,7 @@ All Phase 12 experiments build on the tuned models produced here.
 ```text
 ml/preprocessing.py            (extend to expose trainval split)
 ml/tuning.py                   (new: GridSearch / CV utilities)
-scripts/train_model_tuned.py   (new: rigorous training entry point)
+scripts/training/tuned.py      (new: rigorous training entry point)
 ```
 
 **Primary reference:** scikit-learn `StratifiedKFold`, `GridSearchCV`,
@@ -1062,7 +1065,7 @@ results/models/scaler_tuned.joblib
 ### Entry Point
 
 ```bash
-.venv/bin/python -m scripts.train_model_tuned
+.venv/bin/python -m scripts.training.tuned
 ```
 
 ### Pass Criteria
@@ -1106,7 +1109,7 @@ the detection capability comes from non-linear structure in the data.
 
 ```text
 ml/models/logistic_regression.py     (new)
-scripts/train_model_tuned.py         (extend to include LR)
+scripts/training/tuned.py            (extend to include LR)
 ```
 
 **Primary reference:** scikit-learn `LogisticRegression`,
@@ -1136,17 +1139,17 @@ Phase 11b answers this question with one additional model.
 
 ### Tasks
 
-- [ ] implement `train_logistic_regression(X, y)` in
+- [x] implement `train_logistic_regression(X, y)` in
       `ml/models/logistic_regression.py`
-- [ ] apply `class_weight='balanced'` consistent with Phase 11
-- [ ] run `GridSearchCV` on `trainval` with macro-F1 as selection metric
-- [ ] reuse Phase 11's `StratifiedKFold(n_splits=5)` and seed list
-- [ ] refit on full `trainval` with best hyperparameters
-- [ ] report multi-seed test metrics (mean ± std)
-- [ ] add per-class precision/recall/F1 to `per_class_report.csv`
-- [ ] persist tuned LR model to
+- [x] apply `class_weight='balanced'` consistent with Phase 11
+- [x] run `GridSearchCV` on `trainval` with macro-F1 as selection metric
+- [x] reuse Phase 11's `StratifiedKFold(n_splits=5)` and seed list
+- [x] refit on full `trainval` with best hyperparameters
+- [x] report multi-seed test metrics (mean ± std)
+- [x] add per-class precision/recall/F1 to `per_class_report.csv`
+- [x] persist tuned LR model to
       `results/models/logistic_regression_tuned.joblib`
-- [ ] extend `model_metrics_tuned.csv` with the LR row
+- [x] extend `model_metrics_tuned.csv` with the LR row
 
 ### Search Space (initial)
 
@@ -1174,11 +1177,11 @@ results/tables/cv_results.csv
 
 ### Pass Criteria
 
-- [ ] LR training completes under CV + GridSearchCV without convergence
+- [x] LR training completes under CV + GridSearchCV without convergence
       warnings (or warnings are documented)
-- [ ] LR test metrics are reported with the same format as Phase 11
+- [x] LR test metrics are reported with the same format as Phase 11
       (mean ± std over >=5 seeds, per-class P/R/F1)
-- [ ] The "static rules → linear ML → tree ensembles" comparison is
+- [x] The "static rules → linear ML → tree ensembles" comparison is
       report-ready in `model_metrics_tuned.csv`
 
 ### Design Notes
@@ -1398,9 +1401,9 @@ results/figures/scalability_curve.png
 
 ### Pass Criteria
 
-- [ ] figures are report-ready
-- [ ] tables are report-ready
-- [ ] results answer the research question
+- [x] figures are report-ready
+- [x] tables are report-ready
+- [x] results answer the research question
 
 **Deliverable:** Full experimental result package.
 
@@ -1465,15 +1468,15 @@ dataset interpretability.
 
 ### A. Dataset and Simulator Sanity
 
-- [ ] `dataset_label_distribution.png` — label counts
+- [x] `dataset_label_distribution.png` — label counts
       (`normal` / `degraded` / `failure`) across all generated datasets
-- [ ] `dataset_fault_composition.png` — fault type/subtype counts across
+- [x] `dataset_fault_composition.png` — fault type/subtype counts across
       main, extended, scalability, and mixed-N datasets
-- [ ] `feature_distribution_by_fault.png` — 13-feature boxplots grouped
+- [x] `feature_distribution_by_fault.png` — 13-feature boxplots grouped
       by fault type
-- [ ] `feature_correlation_heatmap.png` — correlation heatmap for the
+- [x] `feature_correlation_heatmap.png` — correlation heatmap for the
       13-feature schema
-- [ ] `label_by_fault_type.png` — label distribution within each fault
+- [x] `label_by_fault_type.png` — label distribution within each fault
       type, showing which faults produce normal-like, degraded, or
       failure rounds
 
@@ -1501,36 +1504,36 @@ dataset interpretability.
 
 ### D. Robustness and Generalisation
 
-- [ ] `robustness_curve.png` — Byzantine-count/ratio shift
-- [ ] `scalability_curve.png` — `N=7/10/13` network-size shift
-- [ ] `mixed_n_curve.png` — N=7-only versus mixed-N training
-- [ ] `feature_shift_by_network_size.png` — key feature distributions
+- [x] `robustness_curve.png` — Byzantine-count/ratio shift
+- [x] `scalability_curve.png` — `N=7/10/13` network-size shift
+- [x] `mixed_n_curve.png` — N=7-only versus mixed-N training
+- [x] `feature_shift_by_network_size.png` — key feature distributions
       across `N=7`, `N=10`, and `N=13`
-- [ ] `ood_f1_by_fault_subtype.png` — advanced-fault subtype performance
-- [ ] `ood_exposure_comparison.png` — main-only versus extended-exposure
+- [x] `ood_f1_by_fault_subtype.png` — advanced-fault subtype performance
+- [x] `ood_exposure_comparison.png` — main-only versus extended-exposure
       OOD performance
 
 ### E. Ablations and Security Assumptions
 
-- [ ] `feature_ablation.png` — 11 features versus
+- [x] `feature_ablation.png` — 11 features versus
       `+quorum_margin`, `+prepare_count_std`, and full 13-feature set
-- [ ] `tuning_ablation.png` — default versus tuned models
-- [ ] `auth_ablation_detection.png` — forgery intensity detection
-- [ ] `strict_ablation_detection.png` — strict round validation on/off
+- [x] `tuning_ablation.png` — default versus tuned models
+- [x] `auth_ablation_detection.png` — forgery intensity detection
+- [x] `strict_ablation_detection.png` — strict round validation on/off
       detection
-- [ ] `strict_ablation_quorum.png` or
+- [x] `strict_ablation_quorum.png` or
       `strict_ablation_success_timeout.png` — protocol-level effect of
       strict validation on quorum, success, or timeout behaviour
 
 ### F. GNN Extension
 
-- [ ] `gnn_scalability_curve.png` — GNN versus tabular models under
+- [x] `gnn_scalability_curve.png` — GNN versus tabular models under
       N=7-only training
-- [ ] `graph_dataset_summary.png` — graph count, average edge count, node
+- [x] `graph_dataset_summary.png` — graph count, average edge count, node
       count, and label distribution for `N=7/10/13`
-- [ ] `gnn_confusion_matrix.png` — GNN confusion matrices on
+- [x] `gnn_confusion_matrix.png` — GNN confusion matrices on
       `N=7`, `N=10`, and `N=13`
-- [ ] `gnn_mixed_n_curve.png` — baseline GNN versus mixed-N GNN, if
+- [x] `gnn_mixed_n_curve.png` — baseline GNN versus mixed-N GNN, if
       mixed-N graph training is implemented
 
 ### G. Explanatory and Deployment Supplements
@@ -1541,23 +1544,23 @@ report's methodology and discussion sections.
 
 Script-generated:
 
-- [ ] `pbft_round_timeline.png` — message send/delivery timeline of one
+- [x] `pbft_round_timeline.png` — message send/delivery timeline of one
       normal round versus one delay-fault round, drawn from the
       simulator message log; explains what the simulator models and
       what a delay attack looks like
-- [ ] `inference_latency_comparison.png` — per-sample inference latency
+- [x] `inference_latency_comparison.png` — per-sample inference latency
       of static baselines, LR, tree models, and GNN/BiLSTM (log scale);
       operational evidence for the lightweight-monitor claim
-- [ ] `learning_curve.png` — test macro-F1 versus training-set size
+- [x] `learning_curve.png` — test macro-F1 versus training-set size
       (optional); pre-empts the "is 1200 rows enough?" question
 
 Hand-drawn (draw.io / PowerPoint, not script-generated):
 
-- [ ] `system_architecture` — simulator module diagram
+- [x] `system_architecture` — simulator module diagram
       (network → node → pbft → fault_injector → features → labels)
-- [ ] `experiment_pipeline` — end-to-end pipeline diagram
+- [x] `experiment_pipeline` — end-to-end pipeline diagram
       (simulate → features → labels → train → evaluate → ablations)
-- [ ] `project_gantt.png` — tracked in Phase 11c; listed here for
+- [x] `project_gantt.png` — tracked in Phase 11c; listed here for
       completeness
 
 ### Backfill — Figures Promised by Earlier Phases
@@ -1566,15 +1569,15 @@ Output figures listed by earlier phases that are currently missing from
 `results/figures/` (the results directory was cleared at some point).
 All scripts and input data exist; regenerate with the commands shown.
 
-- [ ] `phase4c_variance_comparison.png` — Phase 8; operational proof of
+- [x] `phase4c_variance_comparison.png` — Phase 8; operational proof of
       Phase 4c pass criterion PC2 (`scripts.diagnostics.validate_simulator`)
-- [ ] `feature_distribution_by_subtype.png` — Phase 8
+- [x] `feature_distribution_by_subtype.png` — Phase 8
       (`scripts.diagnostics.validate_simulator`)
-- [ ] `feature_importance.png` — Phase 12.A SHAP
+- [x] `feature_importance.png` — Phase 12.A SHAP
       (`scripts.diagnostics.shap_analysis`)
-- [ ] `detection_rate_by_fault_type.png` — Phase 12.A
+- [x] `detection_rate_by_fault_type.png` — Phase 12.A
       (`scripts.diagnostics.per_fault_type` then `scripts.plotting.per_fault_type`)
-- [ ] `failure_recall_by_fault_type.png` — Phase 12.A
+- [x] `failure_recall_by_fault_type.png` — Phase 12.A
       (same commands as above)
 
 **Priority subset:** If time is limited, prioritise
@@ -1660,30 +1663,29 @@ GNN Extension: in-distribution versus scale-shift graph results
 
 **Tasks:**
 
-- [ ] Add a lightweight dashboard entry point, e.g.
-      `src/plotting/dashboard.py` or `scripts/dashboard.py`
-- [ ] Load available CSV tables defensively, showing clear placeholders
+- [x] Add a lightweight dashboard entry point: `scripts/dashboard.py`
+      (kept outside `src/plotting/` so the entry script does not shadow
+      the `src/plotting/dashboard/` package)
+- [x] Load available CSV tables defensively, showing clear placeholders
       when optional experiments have not been run
-- [ ] Provide compact charts for headline metrics and scale/lead-time
+- [x] Provide compact charts for headline metrics and scale/lead-time
       curves
-- [ ] Display generated figures where they already exist instead of
+- [x] Display generated figures where they already exist instead of
       reimplementing every plot
-- [ ] Document the launch command in the README
+- [x] Document the launch command in the README
 
 **Suggested command:**
 
 ```bash
-streamlit run src/plotting/dashboard.py
+streamlit run scripts/dashboard.py
 ```
 
 **Pass Criteria:**
 
-- [ ] Dashboard launches from the repository root
-- [ ] Missing optional result files do not crash the app
-- [ ] Core Phase 12 results are visible without manual CSV inspection
-- [ ] Dashboard supports presentation/demo use while preserving the
+- [x] Dashboard launches from the repository root
+- [x] Missing optional result files do not crash the app
+- [x] Core Phase 12 results are visible without manual CSV inspection
+- [x] Dashboard supports presentation/demo use while preserving the
       project's script-based reproducibility
 
 ---
-
-

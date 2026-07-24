@@ -21,6 +21,7 @@ from .ui import (
     compact_number,
     confusion_heatmap,
     correlation_heatmap,
+    fault_composition_chart,
     feature_boxplot,
     label_name,
     line_chart,
@@ -139,7 +140,7 @@ def page_dataset() -> None:
                 key="fault-dataset-filter",
             )
             fault_view = faults[faults["dataset"].isin(dataset_filter)]
-            bar_chart(fault_view, "dataset", "count", "fault", "Fault composition")
+            fault_composition_chart(fault_view)
 
     with tabs[1]:
         main_df = datasets.get("Main consensus")

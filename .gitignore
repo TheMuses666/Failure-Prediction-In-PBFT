@@ -8,6 +8,8 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv313/
+venv313
 venv/
 env/
 
@@ -49,4 +51,5 @@ results/**/*.json
 
 .claude
 notes/
+.vscode/
 vscode/

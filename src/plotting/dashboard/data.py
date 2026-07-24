@@ -144,10 +144,15 @@ def label_counts_by_dataset(datasets: dict[str, pd.DataFrame]) -> pd.DataFrame:
 def fault_counts_by_dataset(datasets: dict[str, pd.DataFrame]) -> pd.DataFrame:
     rows = []
     for name, df in datasets.items():
-        col = "fault_subtype" if "fault_subtype" in df.columns else "fault_type"
-        if col not in df.columns:
+        if "fault_type" not in df.columns:
             continue
-        counts = df[col].fillna("unknown").value_counts()
+        if "fault_subtype" in df.columns:
+            faults = df["fault_subtype"].fillna("base").astype(str)
+            fault_types = df["fault_type"].fillna("unknown").astype(str)
+            faults = faults.where(~faults.isin(["base", "unknown", "nan"]), fault_types)
+        else:
+            faults = df["fault_type"].fillna("unknown").astype(str)
+        counts = faults.value_counts()
         for fault, count in counts.items():
             rows.append({"dataset": name, "fault": str(fault), "count": int(count)})
     return pd.DataFrame(rows)

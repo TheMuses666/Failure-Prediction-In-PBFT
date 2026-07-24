@@ -8,7 +8,7 @@ import streamlit as st
 # Streamlit adds only this script's directory to sys.path. Add the repository
 # root so dashboard modules can import config.py as the project's single source
 # of truth for paths, labels, and plotting colours.
-ROOT_DIR = Path(__file__).resolve().parents[2]
+ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 

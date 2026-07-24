@@ -216,13 +216,13 @@ kept for provenance; it is not required for any downstream experiment.)
 ### Optional — Results dashboard
 
 ```bash
-.venv/bin/streamlit run src/plotting/dashboard.py
+.venv/bin/streamlit run scripts/dashboard.py
 ```
 
 On Windows PowerShell:
 
 ```powershell
-.\.venv\Scripts\streamlit.exe run src\plotting\dashboard.py
+.\.venv\Scripts\streamlit.exe run scripts\dashboard.py
 ```
 
 ---
@@ -249,7 +249,7 @@ and `data/raw/*.csv` outputs — missing files render as placeholders with
 the command needed to regenerate them.
 
 ```bash
-streamlit run src/plotting/dashboard.py
+streamlit run scripts/dashboard.py
 ```
 
 ---
