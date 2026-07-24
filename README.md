@@ -1,5 +1,7 @@
 # ML-Assisted Predictive Monitoring in BFT Consensus Protocols
 
+**GitHub repository:** https://github.com/TheMuses666/Failure-Prediction-In-PBFT
+
 A SimPy-based discrete-event PBFT simulator with controlled Byzantine fault
 injection, used to generate labelled consensus-round datasets and to evaluate
 whether machine-learning classifiers can predict consensus degradation and
@@ -214,6 +216,10 @@ kept for provenance; it is not required for any downstream experiment.)
 ```
 
 ### Optional — Results dashboard
+
+A lightweight Streamlit viewer over the generated tables and figures. A screen
+recording of the running dashboard is provided in `dashboard.mp4` (included in
+the submission ZIP) for reviewers who do not run it locally.
 
 ```bash
 .venv/bin/streamlit run scripts/dashboard.py
