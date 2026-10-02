@@ -26,6 +26,10 @@ dist/
 # Notebook checkpoints
 .ipynb_checkpoints/
 
+# Internal milestone and planning documents
+*MILESTONE*.md
+*milestone*.md
+
 # Generated data and experiment outputs
 data/raw/*
 data/processed/*

@@ -60,7 +60,6 @@ bft_project/
 ├── config.py                  # single source of truth: paths, seeds, protocol
 │                              #   constants, label thresholds, feature schema
 ├── requirements.txt
-├── SIMPY_MILESTONES.md        # phase-by-phase plan, pass criteria, progress
 │
 ├── src/
 │   ├── simulation/            # SimPy discrete-event PBFT simulator
@@ -309,10 +308,3 @@ not to claim that real PBFT accepts forged votes.
   degradation, but safety is never violated — content-keyed vote buckets
   act as a second implicit defence layer.
 
-## 8. Documentation
-
-- `SIMPY_MILESTONES.md` — the full phase plan (0 → 12), per-phase pass
-  criteria, and completion status; the authoritative map of what was built
-  and why.
-- Design rationale and per-experiment findings are kept in research notes
-  and are summarised in the final report.
